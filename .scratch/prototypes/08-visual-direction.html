@@ -1,0 +1,793 @@
+<!--
+  PROTOTYPE — throwaway. Ticket 08 "Visual design direction".
+  Three radically different storefront directions for Azahar, switchable via
+  ?variant=A|B|C and a floating bottom bar. Answers: layout, card style, palette,
+  imagery treatment, typography feel, and how advanced-search results should look.
+  NOT production code. Imagery = gradient + emoji placeholders (real photos are a
+  seed concern, ticket 06). Type = system font stacks standing in for real webfonts.
+-->
+<title>Azahar — Direcciones de diseño (prototipo)</title>
+<style>
+  /* ---------- page scaffold + prototype chrome (NOT part of any design) ---------- */
+  * { box-sizing: border-box; }
+  :root {
+    --chrome-bg: #0e0f13;
+    --chrome-fg: #f4f4f5;
+    --chrome-muted: #a1a1aa;
+    --chrome-line: #2a2b31;
+  }
+  html, body { margin: 0; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #16171c;
+    color: var(--chrome-fg);
+    -webkit-font-smoothing: antialiased;
+  }
+  #app { min-height: 100vh; }
+
+  /* screen annotation label — dashed pill, obviously not the design */
+  .anno {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 26px 24px 8px;
+  }
+  .anno-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--chrome-muted);
+    border: 1px dashed var(--chrome-line);
+    border-radius: 999px; padding: 5px 12px; background: #1c1d23;
+  }
+
+  /* ---------- floating variant switcher ---------- */
+  .switcher {
+    position: fixed; z-index: 9999; left: 50%; bottom: 22px; transform: translateX(-50%);
+    display: flex; align-items: stretch; gap: 2px;
+    background: var(--chrome-bg); color: var(--chrome-fg);
+    border: 1px solid var(--chrome-line);
+    border-radius: 14px; padding: 6px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .switcher button {
+    all: unset; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    width: 40px; border-radius: 9px; color: var(--chrome-fg); font-size: 18px;
+  }
+  .switcher button:hover { background: #26272e; }
+  .switcher button:focus-visible { outline: 2px solid #7c9cff; outline-offset: 2px; }
+  .switcher .label {
+    display: flex; flex-direction: column; justify-content: center; padding: 4px 16px; min-width: 210px;
+  }
+  .switcher .label b { font-size: 13px; }
+  .switcher .label span { font-size: 11px; color: var(--chrome-muted); }
+  .switcher .dots { display: flex; gap: 5px; align-items: center; padding: 0 8px; }
+  .switcher .dot { width: 7px; height: 7px; border-radius: 50%; background: #3f4048; }
+  .switcher .dot.on { background: #f4f4f5; }
+
+  @media (max-width: 640px) {
+    .switcher .label { min-width: 150px; }
+  }
+
+  /* ================================================================
+     SHARED per-variant image tile — gradient ground + big emoji.
+     Each variant restyles .tile via its own scope.
+     ================================================================ */
+  .tile {
+    position: relative; display: grid; place-items: center; overflow: hidden;
+    aspect-ratio: 1 / 1;
+  }
+  .tile .emoji { font-size: clamp(40px, 9vw, 84px); line-height: 1; filter: drop-shadow(0 4px 8px rgba(0,0,0,.15)); }
+  .tile.wide { aspect-ratio: 4 / 3; }
+  .tile.tall { aspect-ratio: 3 / 4; }
+
+  img, svg { max-width: 100%; }
+
+  /* prevent horizontal body scroll from any wide row */
+  .scroll-x { overflow-x: auto; }
+
+  /* =====================================================================================
+     VARIANT A — "MERCADO"  (utilitarian, search-first, dense, Amazon-style)
+     ===================================================================================== */
+  .v-mercado {
+    --ink: #17181c; --sub: #5b5e66; --line: #e4e5e8; --bg: #ffffff; --panel: #f6f7f8;
+    --accent: #d6006e; --accent-ink: #ffffff; --star: #f5a623;
+    background: var(--bg); color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .v-mercado .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  .v-mercado header.site {
+    position: sticky; top: 0; z-index: 20; background: #fff; border-bottom: 1px solid var(--line);
+  }
+  .v-mercado .bar { display: flex; align-items: center; gap: 20px; height: 66px; }
+  .v-mercado .logo { font-weight: 800; font-size: 22px; letter-spacing: -.02em; color: var(--ink); }
+  .v-mercado .logo span { color: var(--accent); }
+  .v-mercado .searchbar { flex: 1; display: flex; }
+  .v-mercado .searchbar input {
+    flex: 1; height: 42px; border: 1.5px solid var(--ink); border-right: 0;
+    border-radius: 8px 0 0 8px; padding: 0 14px; font-size: 15px; min-width: 0;
+  }
+  .v-mercado .searchbar button {
+    height: 42px; padding: 0 20px; border: 0; background: var(--accent); color: #fff;
+    font-weight: 700; border-radius: 0 8px 8px 0; cursor: pointer; font-size: 15px;
+  }
+  .v-mercado .navlink { color: var(--ink); font-weight: 600; font-size: 15px; text-decoration: none; white-space: nowrap; }
+  .v-mercado .cart { display: flex; align-items: center; gap: 7px; font-weight: 700; }
+  .v-mercado .cart .badge { background: var(--accent); color: #fff; border-radius: 999px; font-size: 12px; padding: 1px 8px; }
+
+  .v-mercado .hero {
+    background: linear-gradient(180deg, #fff, var(--panel));
+    border-bottom: 1px solid var(--line); text-align: center; padding: 40px 24px 44px;
+  }
+  .v-mercado .hero h1 { font-size: clamp(24px, 4vw, 36px); margin: 0 0 6px; letter-spacing: -.02em; }
+  .v-mercado .hero p { color: var(--sub); margin: 0 0 22px; font-size: 16px; }
+  .v-mercado .hero .bigsearch { max-width: 620px; margin: 0 auto; display: flex; }
+  .v-mercado .hero .bigsearch input { flex: 1; height: 52px; border: 1.5px solid var(--ink); border-right: 0; border-radius: 10px 0 0 10px; padding: 0 18px; font-size: 16px; min-width: 0; }
+  .v-mercado .hero .bigsearch button { height: 52px; padding: 0 26px; border: 0; background: var(--accent); color: #fff; font-weight: 700; border-radius: 0 10px 10px 0; cursor: pointer; }
+  .v-mercado .chips-quick { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .v-mercado .chips-quick a { font-size: 13px; color: var(--ink); border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 12px; text-decoration: none; }
+
+  .v-mercado section.block { padding: 34px 0; }
+  .v-mercado .block h2 { font-size: 20px; margin: 0 0 4px; letter-spacing: -.01em; }
+  .v-mercado .block .sub { color: var(--sub); font-size: 14px; margin: 0 0 18px; }
+
+  .v-mercado .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  @media (max-width: 980px) { .v-mercado .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 620px) { .v-mercado .grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .v-mercado .card { border: 1px solid var(--line); border-radius: 10px; background: #fff; overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .15s, border-color .15s; }
+  .v-mercado .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); border-color: #cfd0d4; }
+  .v-mercado .card .tile { border-bottom: 1px solid var(--line); }
+  .v-mercado .card .badge-row { position: absolute; top: 8px; left: 8px; display: flex; gap: 6px; }
+  .v-mercado .card .flag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--ink); color: #fff; }
+  .v-mercado .card .flag.new { background: #0a7d3b; }
+  .v-mercado .card .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .v-mercado .card .name { font-size: 14px; font-weight: 600; line-height: 1.25; }
+  .v-mercado .card .cat { font-size: 11px; color: var(--sub); text-transform: uppercase; letter-spacing: .05em; }
+  .v-mercado .card .stars { color: var(--star); font-size: 12px; }
+  .v-mercado .card .price { font-size: 18px; font-weight: 800; margin-top: auto; }
+  .v-mercado .card .add { margin-top: 4px; height: 36px; border: 1.5px solid var(--accent); color: var(--accent); background: #fff; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; }
+  .v-mercado .card .add:hover { background: var(--accent); color: #fff; }
+
+  .v-mercado .catrow { display: grid; grid-template-columns: repeat(10, 1fr); gap: 10px; }
+  @media (max-width: 980px) { .v-mercado .catrow { grid-template-columns: repeat(5, 1fr); } }
+  @media (max-width: 620px) { .v-mercado .catrow { grid-template-columns: repeat(3, 1fr); } }
+  .v-mercado .catchip { text-align: center; border: 1px solid var(--line); border-radius: 10px; padding: 14px 6px; text-decoration: none; color: var(--ink); background: #fff; }
+  .v-mercado .catchip .e { font-size: 26px; }
+  .v-mercado .catchip .n { font-size: 12px; font-weight: 600; margin-top: 6px; display: block; }
+
+  /* PDP */
+  .v-mercado .pdp { display: grid; grid-template-columns: 90px 1fr 340px; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .v-mercado .pdp { grid-template-columns: 1fr; } }
+  .v-mercado .pdp .thumbs { display: flex; flex-direction: column; gap: 8px; }
+  @media (max-width: 900px) { .v-mercado .pdp .thumbs { flex-direction: row; } }
+  .v-mercado .pdp .thumb { width: 90px; aspect-ratio: 1; border: 1.5px solid var(--line); border-radius: 8px; display: grid; place-items: center; font-size: 26px; cursor: pointer; }
+  .v-mercado .pdp .thumb.sel { border-color: var(--accent); }
+  .v-mercado .pdp .maintile { border: 1px solid var(--line); border-radius: 12px; }
+  .v-mercado .pdp .buybox { border: 1px solid var(--line); border-radius: 12px; padding: 18px; position: sticky; top: 82px; display: flex; flex-direction: column; gap: 12px; }
+  .v-mercado .pdp .buybox h1 { font-size: 22px; margin: 0; letter-spacing: -.01em; }
+  .v-mercado .pdp .buybox .price { font-size: 30px; font-weight: 800; }
+  .v-mercado .pdp .buybox .stk { color: #0a7d3b; font-size: 13px; font-weight: 600; }
+  .v-mercado .pdp .buybox .cta { height: 48px; background: var(--accent); color: #fff; border: 0; border-radius: 10px; font-weight: 800; font-size: 16px; cursor: pointer; }
+  .v-mercado .pdp .buybox .cta.alt { background: #fff; color: var(--ink); border: 1.5px solid var(--ink); }
+  .v-mercado .pdp .spec { border-top: 1px solid var(--line); padding-top: 12px; font-size: 13px; color: var(--sub); display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; }
+  .v-mercado .pdp .spec b { color: var(--ink); font-weight: 600; }
+
+  /* SEARCH */
+  .v-mercado .search { display: grid; grid-template-columns: 250px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 820px) { .v-mercado .search { grid-template-columns: 1fr; } }
+  .v-mercado .facets { border: 1px solid var(--line); border-radius: 12px; padding: 4px 16px 16px; position: sticky; top: 82px; }
+  .v-mercado .facets .fg { border-bottom: 1px solid var(--line); padding: 14px 0; }
+  .v-mercado .facets .fg:last-child { border-bottom: 0; }
+  .v-mercado .facets h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 10px; }
+  .v-mercado .facets label { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 3px 0; color: var(--ink); cursor: pointer; }
+  .v-mercado .facets label .cnt { margin-left: auto; color: var(--sub); font-size: 12px; }
+  .v-mercado .facets label.disabled { color: #b9bbc0; cursor: default; }
+  .v-mercado .facets .clear-row { color: var(--accent); font-size: 12px; font-weight: 600; }
+  .v-mercado .sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,.15); }
+  .v-mercado .results-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .v-mercado .results-head .n { font-size: 14px; color: var(--sub); }
+  .v-mercado .sel { height: 38px; border: 1px solid var(--line); border-radius: 8px; padding: 0 10px; font-size: 13px; background: #fff; }
+  .v-mercado .active-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .v-mercado .active-chips .c { font-size: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; display: inline-flex; gap: 6px; align-items: center; }
+  .v-mercado .active-chips .c b { color: var(--sub); font-weight: 500; }
+  .v-mercado .active-chips .x { cursor: pointer; color: var(--sub); }
+  .v-mercado .active-chips .clearall { color: var(--accent); font-weight: 700; }
+  .v-mercado .pager { display: flex; gap: 6px; justify-content: center; margin-top: 24px; }
+  .v-mercado .pager a { min-width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 8px; text-decoration: none; color: var(--ink); font-size: 14px; }
+  .v-mercado .pager a.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .v-mercado footer.site { border-top: 1px solid var(--line); margin-top: 20px; padding: 28px 0; color: var(--sub); font-size: 13px; }
+
+  /* =====================================================================================
+     VARIANT B — "JARDÍN"  (editorial boutique, image-forward, calm, emerald + plum)
+     ===================================================================================== */
+  .v-jardin {
+    --ink: #21201d; --sub: #6d6a63; --line: #e7e2d8; --bg: #faf8f3; --panel: #f2eee5;
+    --green: #1f4d3a; --plum: #5f2a52; --accent: #1f4d3a; --gold: #b08542;
+    background: var(--bg); color: var(--ink);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .v-jardin .serif { font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif; }
+  .v-jardin .wrap { max-width: 1160px; margin: 0 auto; padding: 0 28px; }
+  .v-jardin header.site { position: sticky; top: 0; z-index: 20; background: rgba(250,248,243,.9); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  .v-jardin .bar { display: flex; align-items: center; gap: 22px; height: 74px; }
+  .v-jardin .logo { font-family: ui-serif, Georgia, serif; font-size: 26px; letter-spacing: .04em; font-weight: 500; }
+  .v-jardin .logo small { display: block; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 9px; letter-spacing: .34em; text-transform: uppercase; color: var(--sub); margin-top: -2px; }
+  .v-jardin .searchbar { flex: 1; max-width: 420px; margin: 0 auto; display: flex; align-items: center; gap: 8px; border: 1px solid #d8d2c6; border-radius: 999px; padding: 0 16px; height: 42px; background: #fff; }
+  .v-jardin .searchbar input { border: 0; outline: 0; flex: 1; font-size: 14px; background: transparent; min-width: 0; }
+  .v-jardin .searchbar .i { color: var(--sub); }
+  .v-jardin .navlink { text-decoration: none; color: var(--ink); font-size: 14px; letter-spacing: .02em; }
+  .v-jardin .cart { display: flex; gap: 7px; align-items: center; font-size: 14px; }
+  .v-jardin .cart .badge { background: var(--green); color: #fff; border-radius: 999px; font-size: 11px; padding: 1px 7px; }
+
+  .v-jardin .hero { display: grid; grid-template-columns: 1fr 1.1fr; align-items: stretch; gap: 0; border-bottom: 1px solid var(--line); }
+  @media (max-width: 860px) { .v-jardin .hero { grid-template-columns: 1fr; } }
+  .v-jardin .hero .txt { padding: 74px 56px; display: flex; flex-direction: column; justify-content: center; }
+  @media (max-width: 860px) { .v-jardin .hero .txt { padding: 44px 28px; } }
+  .v-jardin .hero .eyebrow { font-size: 11px; letter-spacing: .28em; text-transform: uppercase; color: var(--plum); margin-bottom: 18px; }
+  .v-jardin .hero h1 { font-size: clamp(34px, 5vw, 56px); line-height: 1.02; margin: 0 0 20px; font-weight: 500; letter-spacing: -.01em; text-wrap: balance; }
+  .v-jardin .hero p { color: var(--sub); font-size: 17px; line-height: 1.6; margin: 0 0 30px; max-width: 40ch; }
+  .v-jardin .hero .btn { align-self: flex-start; text-decoration: none; background: var(--green); color: #fff; padding: 15px 30px; border-radius: 2px; font-size: 14px; letter-spacing: .04em; }
+  .v-jardin .hero .art { position: relative; min-height: 420px; background: radial-gradient(120% 120% at 70% 20%, #fbe3ec, #e9d8e6 45%, #cddfd2 100%); display: grid; place-items: center; }
+  .v-jardin .hero .art .emoji { font-size: clamp(90px, 16vw, 180px); filter: drop-shadow(0 12px 24px rgba(95,42,82,.25)); }
+  .v-jardin .hero .art .cap { position: absolute; bottom: 22px; left: 22px; background: rgba(255,255,255,.85); padding: 8px 14px; font-size: 12px; }
+  .v-jardin .hero .art .cap b { font-family: ui-serif, Georgia, serif; font-weight: 600; }
+
+  .v-jardin section.block { padding: 68px 0; }
+  .v-jardin .block .head { text-align: center; margin-bottom: 40px; }
+  .v-jardin .block .head .eyebrow { font-size: 11px; letter-spacing: .28em; text-transform: uppercase; color: var(--plum); }
+  .v-jardin .block .head h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 500; margin: 10px 0 0; letter-spacing: -.01em; }
+
+  .v-jardin .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px 24px; }
+  @media (max-width: 900px) { .v-jardin .grid { grid-template-columns: repeat(2, 1fr); } }
+  .v-jardin .card { text-decoration: none; color: var(--ink); display: flex; flex-direction: column; }
+  .v-jardin .card .tile { background: var(--panel); }
+  .v-jardin .card:hover .tile .emoji { transform: scale(1.05); }
+  .v-jardin .card .tile .emoji { transition: transform .4s ease; }
+  .v-jardin .card .meta { padding: 16px 2px 0; text-align: center; }
+  .v-jardin .card .cat { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--sub); }
+  .v-jardin .card .name { font-family: ui-serif, Georgia, serif; font-size: 19px; margin: 6px 0; font-weight: 500; }
+  .v-jardin .card .price { font-size: 15px; color: var(--green); letter-spacing: .02em; }
+
+  .v-jardin .cats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: var(--line); border: 1px solid var(--line); }
+  @media (max-width: 780px) { .v-jardin .cats { grid-template-columns: repeat(2, 1fr); } }
+  .v-jardin .catcell { background: var(--bg); text-decoration: none; color: var(--ink); padding: 30px 16px; text-align: center; transition: background .2s; }
+  .v-jardin .catcell:hover { background: var(--panel); }
+  .v-jardin .catcell .e { font-size: 30px; }
+  .v-jardin .catcell .n { font-family: ui-serif, Georgia, serif; font-size: 15px; margin-top: 10px; }
+
+  .v-jardin .occasion { background: var(--green); color: #fff; }
+  .v-jardin .occasion .head h2 { color: #fff; }
+  .v-jardin .occasion .head .eyebrow { color: #b9d3c4; }
+  .v-jardin .occ-strip { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .v-jardin .occ-strip a { text-decoration: none; color: #fff; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 10px 22px; font-size: 14px; }
+
+  /* PDP */
+  .v-jardin .pdp { display: grid; grid-template-columns: 1.1fr 1fr; gap: 56px; align-items: start; }
+  @media (max-width: 860px) { .v-jardin .pdp { grid-template-columns: 1fr; gap: 30px; } }
+  .v-jardin .pdp .gallery .maintile { background: radial-gradient(120% 120% at 60% 25%, #fbe3ec, #cddfd2 100%); border-radius: 3px; }
+  .v-jardin .pdp .gallery .row { display: flex; gap: 10px; margin-top: 10px; }
+  .v-jardin .pdp .gallery .row .t { flex: 1; aspect-ratio: 1; background: var(--panel); display: grid; place-items: center; font-size: 26px; }
+  .v-jardin .pdp .info .eyebrow { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--plum); }
+  .v-jardin .pdp .info h1 { font-family: ui-serif, Georgia, serif; font-size: 40px; font-weight: 500; margin: 12px 0; line-height: 1.05; }
+  .v-jardin .pdp .info .price { font-size: 24px; color: var(--green); margin-bottom: 22px; }
+  .v-jardin .pdp .info p { color: var(--sub); line-height: 1.7; margin: 0 0 28px; }
+  .v-jardin .pdp .info .cta { display: block; width: 100%; text-align: center; background: var(--green); color: #fff; border: 0; padding: 17px; border-radius: 2px; font-size: 15px; letter-spacing: .04em; cursor: pointer; margin-bottom: 12px; }
+  .v-jardin .pdp .info .cta.alt { background: transparent; color: var(--green); border: 1px solid var(--green); }
+  .v-jardin .pdp .info .detail { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 20px; font-size: 14px; }
+  .v-jardin .pdp .info .detail .r { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px dotted var(--line); }
+  .v-jardin .pdp .info .detail .r span:first-child { color: var(--sub); }
+
+  /* SEARCH */
+  .v-jardin .search { display: grid; grid-template-columns: 230px 1fr; gap: 44px; align-items: start; }
+  @media (max-width: 820px) { .v-jardin .search { grid-template-columns: 1fr; } }
+  .v-jardin .facets .fg { padding: 18px 0; border-bottom: 1px solid var(--line); }
+  .v-jardin .facets .fg:first-child { padding-top: 0; }
+  .v-jardin .facets h3 { font-family: ui-serif, Georgia, serif; font-size: 16px; font-weight: 500; margin: 0 0 12px; }
+  .v-jardin .facets label { display: flex; align-items: center; gap: 9px; font-size: 13px; padding: 4px 0; color: var(--ink); }
+  .v-jardin .facets label .cnt { margin-left: auto; color: var(--sub); font-size: 12px; }
+  .v-jardin .facets label.disabled { color: #c3bfb5; }
+  .v-jardin .facets .clear-row { color: var(--plum); font-size: 12px; }
+  .v-jardin .sw { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,.12); }
+  .v-jardin .results-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; }
+  .v-jardin .results-head h2 { font-family: ui-serif, Georgia, serif; font-weight: 500; font-size: 26px; margin: 0; }
+  .v-jardin .results-head .n { color: var(--sub); font-size: 13px; }
+  .v-jardin .sel { border: 0; border-bottom: 1px solid var(--ink); background: transparent; font-size: 13px; padding: 6px 4px; }
+  .v-jardin .active-chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 22px; }
+  .v-jardin .active-chips .c { font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; display: inline-flex; gap: 6px; align-items: center; background: #fff; }
+  .v-jardin .active-chips .clearall { color: var(--plum); border-color: var(--plum); }
+  .v-jardin .pager { display: flex; gap: 8px; justify-content: center; margin-top: 40px; }
+  .v-jardin .pager a { min-width: 34px; height: 34px; display: grid; place-items: center; text-decoration: none; color: var(--ink); font-size: 14px; border-radius: 50%; }
+  .v-jardin .pager a.on { background: var(--green); color: #fff; }
+  .v-jardin footer.site { border-top: 1px solid var(--line); margin-top: 30px; padding: 40px 0; color: var(--sub); font-size: 13px; text-align: center; }
+
+  /* =====================================================================================
+     VARIANT C — "FIESTA"  (playful gift shop, category-tile-first, bright, rounded)
+     ===================================================================================== */
+  .v-fiesta {
+    --ink: #2b2036; --sub: #7a6f85; --line: #f0e7e0; --bg: #fffaf5; --panel: #fff2e9;
+    --coral: #ff5a5f; --tang: #ff8a3d; --sun: #ffc23c; --sky: #4cc4d6; --grape: #8a5cf6;
+    --accent: #ff5a5f;
+    background: var(--bg); color: var(--ink);
+    font-family: "Trebuchet MS", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  }
+  .v-fiesta .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .v-fiesta header.site { position: sticky; top: 0; z-index: 20; background: #fff; border-bottom: 3px solid var(--panel); }
+  .v-fiesta .bar { display: flex; align-items: center; gap: 18px; height: 72px; }
+  .v-fiesta .logo { font-weight: 900; font-size: 26px; color: var(--coral); letter-spacing: -.02em; }
+  .v-fiesta .logo .b { color: var(--grape); }
+  .v-fiesta .searchbar { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--panel); border-radius: 999px; padding: 0 18px; height: 46px; }
+  .v-fiesta .searchbar input { flex: 1; border: 0; background: transparent; outline: 0; font-size: 15px; min-width: 0; }
+  .v-fiesta .navlink { text-decoration: none; color: var(--ink); font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .v-fiesta .cart { display: flex; align-items: center; gap: 7px; font-weight: 800; background: var(--coral); color: #fff; padding: 9px 15px; border-radius: 999px; }
+  .v-fiesta .cart .badge { background: #fff; color: var(--coral); border-radius: 999px; font-size: 12px; padding: 0 7px; }
+
+  .v-fiesta .hero { position: relative; margin: 24px 0; border-radius: 28px; overflow: hidden; background: linear-gradient(120deg, #ffe0d6, #ffd6e8 55%, #e6dcff); padding: 48px 44px; display: grid; grid-template-columns: 1.2fr 1fr; align-items: center; gap: 20px; }
+  @media (max-width: 780px) { .v-fiesta .hero { grid-template-columns: 1fr; padding: 34px 24px; } }
+  .v-fiesta .hero h1 { font-size: clamp(30px, 5vw, 48px); margin: 0 0 12px; line-height: 1.05; letter-spacing: -.02em; text-wrap: balance; }
+  .v-fiesta .hero h1 em { font-style: normal; color: var(--coral); }
+  .v-fiesta .hero p { font-size: 17px; color: var(--sub); margin: 0 0 22px; font-weight: 600; }
+  .v-fiesta .hero .btn { display: inline-block; text-decoration: none; background: var(--ink); color: #fff; font-weight: 800; padding: 15px 30px; border-radius: 999px; font-size: 16px; }
+  .v-fiesta .hero .blob { justify-self: center; font-size: clamp(100px, 18vw, 190px); filter: drop-shadow(0 16px 30px rgba(255,90,95,.3)); }
+
+  .v-fiesta section.block { padding: 34px 0; }
+  .v-fiesta .block h2 { font-size: 26px; margin: 0 0 4px; font-weight: 900; letter-spacing: -.01em; }
+  .v-fiesta .block h2 .emo { margin-right: 8px; }
+  .v-fiesta .block .sub { color: var(--sub); font-weight: 600; margin: 0 0 20px; }
+
+  /* category-tile-first: big colorful tiles are the primary browse affordance */
+  .v-fiesta .bigcats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  @media (max-width: 900px) { .v-fiesta .bigcats { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 560px) { .v-fiesta .bigcats { grid-template-columns: repeat(2, 1fr); } }
+  .v-fiesta .bigcat { text-decoration: none; color: var(--ink); border-radius: 22px; padding: 22px 14px; text-align: center; font-weight: 800; }
+  .v-fiesta .bigcat .e { font-size: 40px; display: block; }
+  .v-fiesta .bigcat .n { font-size: 14px; margin-top: 10px; }
+
+  .v-fiesta .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  @media (max-width: 900px) { .v-fiesta .grid { grid-template-columns: repeat(2, 1fr); } }
+  .v-fiesta .card { background: #fff; border-radius: 22px; overflow: hidden; box-shadow: 0 6px 18px rgba(43,32,54,.06); display: flex; flex-direction: column; text-decoration: none; color: var(--ink); }
+  .v-fiesta .card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(43,32,54,.12); }
+  .v-fiesta .card { transition: transform .18s, box-shadow .18s; }
+  .v-fiesta .card .tile { border-radius: 22px 22px 0 0; }
+  .v-fiesta .card .flag { position: absolute; top: 12px; left: 12px; background: var(--sun); color: var(--ink); font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 999px; }
+  .v-fiesta .card .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .v-fiesta .card .name { font-weight: 800; font-size: 15px; line-height: 1.25; }
+  .v-fiesta .card .foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .v-fiesta .card .pricepill { background: var(--sun); color: var(--ink); font-weight: 900; padding: 6px 14px; border-radius: 999px; font-size: 15px; }
+  .v-fiesta .card .plus { width: 38px; height: 38px; border-radius: 50%; background: var(--coral); color: #fff; border: 0; font-size: 22px; cursor: pointer; display: grid; place-items: center; }
+
+  /* PDP single-column immersive */
+  .v-fiesta .pdp { max-width: 760px; margin: 0 auto; }
+  .v-fiesta .pdp .maintile { border-radius: 28px; background: linear-gradient(120deg, #ffe0d6, #ffd6e8 60%, #e6dcff); }
+  .v-fiesta .pdp .maintile .emoji { font-size: clamp(90px, 18vw, 160px); }
+  .v-fiesta .pdp h1 { font-size: 34px; font-weight: 900; margin: 24px 0 8px; letter-spacing: -.01em; }
+  .v-fiesta .pdp .price { display: inline-block; background: var(--sun); font-weight: 900; font-size: 24px; padding: 8px 20px; border-radius: 999px; margin-bottom: 18px; }
+  .v-fiesta .pdp p { color: var(--sub); font-size: 16px; font-weight: 600; line-height: 1.6; margin: 0 0 24px; }
+  .v-fiesta .pdp .ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .v-fiesta .pdp .cta { flex: 1; min-width: 200px; text-align: center; border: 0; border-radius: 999px; padding: 17px; font-weight: 800; font-size: 16px; cursor: pointer; }
+  .v-fiesta .pdp .cta.wa { background: #25d366; color: #fff; }
+  .v-fiesta .pdp .cta.cart { background: var(--ink); color: #fff; }
+  .v-fiesta .pdp .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
+  .v-fiesta .pdp .tags .t { background: var(--panel); border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700; }
+
+  /* SEARCH */
+  .v-fiesta .search { display: grid; grid-template-columns: 240px 1fr; gap: 26px; align-items: start; }
+  @media (max-width: 820px) { .v-fiesta .search { grid-template-columns: 1fr; } }
+  .v-fiesta .facets { background: #fff; border-radius: 22px; padding: 8px 20px 20px; box-shadow: 0 6px 18px rgba(43,32,54,.05); }
+  .v-fiesta .facets .fg { padding: 16px 0; border-bottom: 2px dotted var(--line); }
+  .v-fiesta .facets .fg:last-child { border-bottom: 0; }
+  .v-fiesta .facets h3 { font-size: 14px; font-weight: 900; margin: 0 0 10px; }
+  .v-fiesta .facets label { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; padding: 4px 0; cursor: pointer; }
+  .v-fiesta .facets label .cnt { margin-left: auto; color: var(--sub); }
+  .v-fiesta .facets label.disabled { color: #cfc6cf; }
+  .v-fiesta .facets .clear-row { color: var(--coral); font-weight: 800; font-size: 12px; }
+  .v-fiesta .sw { width: 15px; height: 15px; border-radius: 50%; }
+  .v-fiesta .results-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .v-fiesta .results-head .n { font-weight: 800; }
+  .v-fiesta .sel { border: 2px solid var(--panel); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 13px; background: #fff; }
+  .v-fiesta .active-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .v-fiesta .active-chips .c { font-size: 12px; font-weight: 700; background: var(--panel); border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; }
+  .v-fiesta .active-chips .clearall { background: var(--coral); color: #fff; }
+  .v-fiesta .pager { display: flex; gap: 8px; justify-content: center; margin-top: 26px; }
+  .v-fiesta .pager a { min-width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; text-decoration: none; color: var(--ink); font-weight: 800; background: #fff; box-shadow: 0 3px 10px rgba(43,32,54,.06); }
+  .v-fiesta .pager a.on { background: var(--coral); color: #fff; }
+  .v-fiesta footer.site { margin-top: 24px; padding: 30px 0; color: var(--sub); font-weight: 600; font-size: 13px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div id="app"></div>
+
+<div class="switcher" role="group" aria-label="Cambiar dirección de diseño">
+  <button id="prev" aria-label="Dirección anterior">‹</button>
+  <div class="label"><b id="vname"></b><span id="vdesc"></span></div>
+  <div class="dots" id="dots" aria-hidden="true"></div>
+  <button id="next" aria-label="Siguiente dirección">›</button>
+</div>
+
+<script>
+/* ---------------------------------------------------------------- data ---- */
+const money = n => "$" + n;
+
+const CATS = [
+  ["ramos","💐","Ramos"],["arreglos","🌸","Arreglos"],["cajas","🎁","Cajas"],
+  ["canastas","🧺","Canastas"],["floreros","🏺","Floreros"],["plantas","🪴","Plantas"],
+  ["coronas","🕊️","Coronas"],["centros-de-mesa","🕯️","Centros de mesa"],
+  ["rosas-preservadas","🌹","Rosas preservadas"],["detalles","🎀","Detalles"]
+];
+
+const OCCASIONS = ["Cumpleaños","Aniversario","Amor y romance","Día de la Madre","Agradecimiento","Felicitaciones","Condolencias","Nuevo bebé"];
+
+// dominant-colour -> gradient (imagery placeholder treatment)
+const GRAD = {
+  rojo:"linear-gradient(135deg,#ff8a8a,#c92a3b)", rosa:"linear-gradient(135deg,#ffc2d6,#ff5c8a)",
+  blanco:"linear-gradient(135deg,#fbfbf7,#dedcd0)", amarillo:"linear-gradient(135deg,#ffe680,#ffab00)",
+  naranja:"linear-gradient(135deg,#ffc08a,#fb7a1e)", morado:"linear-gradient(135deg,#d3b8ff,#7b4bd6)",
+  verde:"linear-gradient(135deg,#b4e6bd,#2f9e56)", multicolor:"conic-gradient(from 210deg,#ff8a8a,#ffd166,#8ce99a,#74c0fc,#d0bfff,#ff8a8a)"
+};
+
+const P = [
+  {slug:"ramo-deluxe-24-rosas", n:"Ramo Deluxe 24 Rosas", cat:"ramos", price:89, col:"rojo", e:"🌹", occ:"Aniversario", ft:"Rosas", sz:"Grande", feat:true, flag:"Destacado"},
+  {slug:"caja-rosas-rojas", n:"Caja de Rosas Rojas", cat:"cajas", price:72, col:"rojo", e:"🎁", occ:"Amor y romance", ft:"Rosas", sz:"Mediano", feat:true, flag:"Destacado"},
+  {slug:"arreglo-primavera", n:"Arreglo Primavera", cat:"arreglos", price:54, col:"multicolor", e:"🌸", occ:"Cumpleaños", ft:"Mixto", sz:"Mediano", feat:true},
+  {slug:"girasoles-radiantes", n:"Girasoles Radiantes", cat:"ramos", price:32, col:"amarillo", e:"🌻", occ:"Felicitaciones", ft:"Girasoles", sz:"Mediano", feat:true, flag:"Nuevo", isNew:true},
+  {slug:"rosas-preservadas-eternas", n:"Rosas Preservadas Eternas", cat:"rosas-preservadas", price:95, col:"rojo", e:"🌹", occ:"Aniversario", ft:"Rosas", sz:"Pequeño", feat:true},
+  {slug:"florero-elegance", n:"Florero Elegance", cat:"floreros", price:65, col:"blanco", e:"🏺", occ:"Agradecimiento", ft:"Lirios", sz:"Grande"},
+  {slug:"orquidea-maceta", n:"Orquídea en Maceta", cat:"plantas", price:58, col:"morado", e:"🪴", occ:"Felicitaciones", ft:"Orquídeas", sz:"Mediano", feat:true},
+  {slug:"canasta-campestre", n:"Canasta Campestre", cat:"canastas", price:48, col:"multicolor", e:"🧺", occ:"Cumpleaños", ft:"Mixto", sz:"Grande"},
+  {slug:"tulipanes-holandeses", n:"Ramo de Tulipanes", cat:"ramos", price:38, col:"rosa", e:"🌷", occ:"Día de la Madre", ft:"Tulipanes", sz:"Mediano"},
+  {slug:"centro-otonal", n:"Centro de Mesa Otoñal", cat:"centros-de-mesa", price:44, col:"naranja", e:"🕯️", occ:"Agradecimiento", ft:"Mixto", sz:"Mediano"},
+  {slug:"mini-suculentas", n:"Mini Suculentas", cat:"detalles", price:18, col:"verde", e:"🪴", occ:"Nuevo bebé", ft:"Mixto", sz:"Pequeño"},
+  {slug:"corona-serenidad", n:"Corona Serenidad", cat:"coronas", price:120, col:"blanco", e:"🕊️", occ:"Condolencias", ft:"Lirios", sz:"Grande"}
+];
+
+const tile = (p, cls="") => `<div class="tile ${cls}" style="background:${GRAD[p.col]}"><span class="emoji">${p.e}</span></div>`;
+const catName = s => (CATS.find(c=>c[0]===s)||[,,s])[2];
+
+const COLOR_HEX = {rojo:"#c92a3b",rosa:"#ff5c8a",blanco:"#e8e6dc",amarillo:"#ffab00",naranja:"#fb7a1e",morado:"#7b4bd6",verde:"#2f9e56",multicolor:"conic-gradient(from 210deg,#ff8a8a,#ffd166,#8ce99a,#74c0fc,#d0bfff)"};
+const sw = c => `<span class="sw" style="background:${COLOR_HEX[c]||c}"></span>`;
+
+/* ---------------------------------------------------------------- shared bits ---- */
+const featured = P.filter(p=>p.feat);
+const hero = P[0];
+
+/* ================================================================ VARIANT A ==== */
+function mercado(){
+  const cards = P.slice(0,10).map(p=>`
+    <div class="card">
+      <div class="tile" style="background:${GRAD[p.col]}">
+        ${p.flag?`<div class="badge-row"><span class="flag ${p.isNew?'new':''}">${p.flag}</span></div>`:''}
+        <span class="emoji">${p.e}</span>
+      </div>
+      <div class="body">
+        <span class="cat">${catName(p.cat)}</span>
+        <div class="name">${p.n}</div>
+        <div class="stars">★★★★☆</div>
+        <div class="price">${money(p.price)}</div>
+        <button class="add">Agregar al carrito</button>
+      </div>
+    </div>`).join("");
+
+  const facetGroup = (title, items, type="checkbox", swatch=false) => `
+    <div class="fg"><h3>${title}</h3>
+      <label class="clear-row"><input type="${type}" name="${title}" checked> Cualquiera</label>
+      ${items.map(([lab,cnt,dis])=>`<label class="${dis?'disabled':''}"><input type="${type}" name="${title}" ${dis?'disabled':''}>${swatch?sw(lab.toLowerCase()):''}${lab}<span class="cnt">${cnt}</span></label>`).join("")}
+    </div>`;
+
+  const results = P.slice(0,10).map(p=>`
+    <div class="card">
+      <div class="tile" style="background:${GRAD[p.col]}"><span class="emoji">${p.e}</span></div>
+      <div class="body"><span class="cat">${catName(p.cat)}</span><div class="name">${p.n}</div>
+      <div class="price">${money(p.price)}</div><button class="add">Agregar</button></div>
+    </div>`).join("");
+
+  return `<div class="v-mercado">
+    <header class="site"><div class="wrap bar">
+      <div class="logo">Azah<span>ar</span></div>
+      <form class="searchbar" onsubmit="return false"><input placeholder="Buscar flores, ocasiones, categorías…" aria-label="Buscar"><button>Buscar</button></form>
+      <a class="navlink" href="#">Categorías</a>
+      <div class="cart">🛒 <span class="badge">3</span></div>
+    </div></header>
+
+    <div class="hero">
+      <h1>Flores para cada ocasión</h1>
+      <p>Envío el mismo día en toda la ciudad · Pago Móvil, Zelle o efectivo</p>
+      <form class="bigsearch" onsubmit="return false"><input placeholder="¿Qué estás buscando hoy?" aria-label="Buscar"><button>Buscar</button></form>
+      <div class="chips-quick"><a href="#">Rosas</a><a href="#">Cumpleaños</a><a href="#">Menos de $50</a><a href="#">Envío hoy</a></div>
+    </div>
+
+    <div class="wrap">
+      <section class="block"><h2>Destacados</h2><p class="sub">Los favoritos de esta semana</p>
+        <div class="grid">${cards}</div>
+      </section>
+
+      <section class="block"><h2>Comprar por categoría</h2><p class="sub">10 categorías</p>
+        <div class="catrow">${CATS.map(c=>`<a class="catchip" href="#"><div class="e">${c[1]}</div><span class="n">${c[2]}</span></a>`).join("")}</div>
+      </section>
+    </div>
+
+    ${anno("Detalle de producto")}
+    <div class="wrap"><section class="block"><div class="pdp">
+      <div class="thumbs">${[hero.e,'🌹','💐','🎀'].map((e,i)=>`<div class="thumb ${i===0?'sel':''}">${e}</div>`).join("")}</div>
+      <div class="tile maintile wide" style="background:${GRAD[hero.col]}"><span class="emoji">${hero.e}</span></div>
+      <div class="buybox">
+        <span class="cat" style="font-size:12px;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">${catName(hero.cat)}</span>
+        <h1>${hero.n}</h1>
+        <div class="stars" style="color:var(--star)">★★★★☆ <span style="color:var(--sub);font-size:13px">(42)</span></div>
+        <div class="price">${money(hero.price)}</div>
+        <div class="stk">✓ Disponible · envío hoy</div>
+        <button class="cta">Agregar al carrito</button>
+        <button class="cta alt">Comprar ahora</button>
+        <div class="spec">
+          <b>Ocasión</b><span>${hero.occ}</span>
+          <b>Tipo</b><span>${hero.ft}</span>
+          <b>Color</b><span style="text-transform:capitalize">${hero.col}</span>
+          <b>Tamaño</b><span>${hero.sz}</span>
+        </div>
+      </div>
+    </div></section></div>
+
+    ${anno("Búsqueda avanzada — resultados")}
+    <div class="wrap"><section class="block"><div class="search">
+      <aside class="facets">
+        ${facetGroup("Categoría", CATS.slice(0,6).map(c=>[c[2], (2+c[2].length%5)]), "radio")}
+        ${facetGroup("Precio", [["$0 – $25",6],["$25 – $50",19],["$50 – $100",15],["$100+",7]], "radio")}
+        ${facetGroup("Ocasión", OCCASIONS.slice(0,6).map(o=>[o, 3+o.length%6]))}
+        ${facetGroup("Tipo de flor", [["Rosas",14],["Girasoles",5],["Tulipanes",4],["Orquídeas",3],["Lirios",0,true]])}
+        ${facetGroup("Color", ["rojo","rosa","blanco","amarillo","morado","verde"].map(c=>[c.charAt(0).toUpperCase()+c.slice(1),3+c.length%5]), "checkbox", true)}
+        ${facetGroup("Tamaño", [["Pequeño",12],["Mediano",22],["Grande",16]], "radio")}
+      </aside>
+      <div>
+        <div class="results-head">
+          <span class="n">1 – 12 de 34 resultados</span>
+          <select class="sel"><option>Ordenar: Destacados</option><option>Precio: menor a mayor</option><option>Precio: mayor a menor</option><option>Nombre A–Z</option></select>
+        </div>
+        <div class="active-chips">
+          <span class="c"><b>Categoría:</b> Ramos <span class="x">✕</span></span>
+          <span class="c"><b>Color:</b> Rojo <span class="x">✕</span></span>
+          <span class="c"><b>Ocasión:</b> Aniversario <span class="x">✕</span></span>
+          <span class="c clearall">Limpiar todo</span>
+        </div>
+        <div class="grid">${results}</div>
+        <nav class="pager"><a href="#">‹</a><a class="on" href="#">1</a><a href="#">2</a><a href="#">3</a><a href="#">›</a></nav>
+      </div>
+    </div></section></div>
+
+    <footer class="site"><div class="wrap">Azahar · Caracas, Venezuela · WhatsApp +58 000-0000000 · © 2026</div></footer>
+  </div>`;
+}
+
+/* ================================================================ VARIANT B ==== */
+function jardin(){
+  const cards = featured.slice(0,4).map(p=>`
+    <a class="card" href="#">${tile(p,'tall')}
+      <div class="meta"><div class="cat">${catName(p.cat)}</div><div class="name serif">${p.n}</div><div class="price">${money(p.price)}</div></div>
+    </a>`).join("");
+
+  const facetGroup = (title, items, type="checkbox", swatch=false) => `
+    <div class="fg"><h3>${title}</h3>
+      <label class="clear-row"><input type="${type}" name="j${title}" checked> Cualquiera</label>
+      ${items.map(([lab,cnt,dis])=>`<label class="${dis?'disabled':''}"><input type="${type}" name="j${title}" ${dis?'disabled':''}>${swatch?sw(lab.toLowerCase()):''}${lab}<span class="cnt">${cnt}</span></label>`).join("")}
+    </div>`;
+
+  const results = P.slice(0,8).map(p=>`
+    <a class="card" href="#">${tile(p,'tall')}
+      <div class="meta"><div class="cat">${catName(p.cat)}</div><div class="name serif">${p.n}</div><div class="price">${money(p.price)}</div></div>
+    </a>`).join("");
+
+  return `<div class="v-jardin">
+    <header class="site"><div class="wrap bar">
+      <div class="logo">Azahar<small>Floristería</small></div>
+      <form class="searchbar" onsubmit="return false"><span class="i">⌕</span><input placeholder="Buscar en la colección…" aria-label="Buscar"></form>
+      <a class="navlink" href="#">Categorías</a>
+      <div class="cart">Bolsa <span class="badge">3</span></div>
+    </div></header>
+
+    <div class="hero">
+      <div class="txt">
+        <div class="eyebrow">Colección de temporada</div>
+        <h1 class="serif">Ramos que dicen lo que las palabras callan</h1>
+        <p>Composiciones artesanales de flores frescas, entregadas con cuidado en toda la ciudad.</p>
+        <a class="btn" href="#">Explorar la colección</a>
+      </div>
+      <div class="art"><span class="emoji">${hero.e}</span><div class="cap"><b>${hero.n}</b> · ${money(hero.price)}</div></div>
+    </div>
+
+    <div class="wrap">
+      <section class="block"><div class="head"><div class="eyebrow">Selección del florista</div><h2 class="serif">Favoritos de la casa</h2></div>
+        <div class="grid">${cards}</div>
+      </section>
+    </div>
+
+    <section class="block" style="padding-top:0"><div class="wrap">
+      <div class="head"><div class="eyebrow">Explorar</div><h2 class="serif">Por categoría</h2></div>
+      <div class="cats">${CATS.map(c=>`<a class="catcell" href="#"><div class="e">${c[1]}</div><div class="n">${c[2]}</div></a>`).join("")}</div>
+    </div></section>
+
+    <section class="block occasion"><div class="wrap">
+      <div class="head"><div class="eyebrow">¿Para qué momento?</div><h2 class="serif">Comprar por ocasión</h2></div>
+      <div class="occ-strip">${OCCASIONS.map(o=>`<a href="#">${o}</a>`).join("")}</div>
+    </div></section>
+
+    ${anno("Detalle de producto")}
+    <div class="wrap"><section class="block"><div class="pdp">
+      <div class="gallery">
+        <div class="tile maintile" style="aspect-ratio:1"><span class="emoji" style="font-size:120px">${hero.e}</span></div>
+        <div class="row">${['🌹','💐','🎀','🌿'].map(e=>`<div class="t">${e}</div>`).join("")}</div>
+      </div>
+      <div class="info">
+        <div class="eyebrow">${catName(hero.cat)}</div>
+        <h1>${hero.n}</h1>
+        <div class="price">${money(hero.price)}</div>
+        <p>Dos docenas de rosas rojas de tallo largo, seleccionadas a mano y compuestas con follaje fresco. Un gesto clásico para los momentos que merecen recordarse.</p>
+        <button class="cta">Añadir a la bolsa</button>
+        <button class="cta alt">Comprar por WhatsApp</button>
+        <div class="detail">
+          <div class="r"><span>Ocasión</span><span>${hero.occ}</span></div>
+          <div class="r"><span>Tipo de flor</span><span>${hero.ft}</span></div>
+          <div class="r"><span>Color</span><span style="text-transform:capitalize">${hero.col}</span></div>
+          <div class="r"><span>Tamaño</span><span>${hero.sz}</span></div>
+        </div>
+      </div>
+    </div></section></div>
+
+    ${anno("Búsqueda avanzada — resultados")}
+    <div class="wrap"><section class="block"><div class="search">
+      <aside class="facets">
+        ${facetGroup("Categoría", CATS.slice(0,6).map(c=>[c[2], (2+c[2].length%5)]), "radio")}
+        ${facetGroup("Precio", [["$0 – $25",6],["$25 – $50",19],["$50 – $100",15],["$100+",7]], "radio")}
+        ${facetGroup("Ocasión", OCCASIONS.slice(0,5).map(o=>[o, 3+o.length%6]))}
+        ${facetGroup("Color", ["rojo","rosa","blanco","amarillo","morado"].map(c=>[c.charAt(0).toUpperCase()+c.slice(1),3+c.length%5]), "checkbox", true)}
+        ${facetGroup("Tamaño", [["Pequeño",12],["Mediano",22],["Grande",16]], "radio")}
+      </aside>
+      <div>
+        <div class="results-head"><h2 class="serif">Rosas</h2><span class="n">34 composiciones</span>
+          <select class="sel"><option>Destacados</option><option>Precio ↑</option><option>Precio ↓</option><option>Nombre</option></select>
+        </div>
+        <div class="active-chips">
+          <span class="c">Ramos ✕</span><span class="c">Rojo ✕</span><span class="c">Aniversario ✕</span>
+          <span class="c clearall">Limpiar todo</span>
+        </div>
+        <div class="grid">${results}</div>
+        <nav class="pager"><a href="#">‹</a><a class="on" href="#">1</a><a href="#">2</a><a href="#">3</a><a href="#">›</a></nav>
+      </div>
+    </div></section></div>
+
+    <footer class="site"><div class="wrap">Azahar Floristería · Caracas · Hecho con flores frescas · © 2026</div></footer>
+  </div>`;
+}
+
+/* ================================================================ VARIANT C ==== */
+function fiesta(){
+  const catColors = ["#ffe0d6","#ffe9c7","#d8f5e8","#dcefff","#ede0ff","#ffe0ec","#e6f7f9","#fff0d6","#ffd9d9","#e9ffe0"];
+  const bigcats = CATS.map((c,i)=>`<a class="bigcat" href="#" style="background:${catColors[i%catColors.length]}"><span class="e">${c[1]}</span><span class="n">${c[2]}</span></a>`).join("");
+
+  const card = p=>`
+    <a class="card" href="#">
+      <div class="tile" style="background:${GRAD[p.col]}">${p.flag?`<span class="flag">${p.flag}</span>`:''}<span class="emoji">${p.e}</span></div>
+      <div class="body"><div class="name">${p.n}</div>
+        <div class="foot"><span class="pricepill">${money(p.price)}</span><button class="plus" aria-label="Agregar">＋</button></div>
+      </div>
+    </a>`;
+  const cards = featured.slice(0,4).map(card).join("");
+  const results = P.slice(0,8).map(card).join("");
+
+  const facetGroup = (title, items, type="checkbox", swatch=false) => `
+    <div class="fg"><h3>${title}</h3>
+      <label class="clear-row"><input type="${type}" name="f${title}" checked> Cualquiera</label>
+      ${items.map(([lab,cnt,dis])=>`<label class="${dis?'disabled':''}"><input type="${type}" name="f${title}" ${dis?'disabled':''}>${swatch?sw(lab.toLowerCase()):''}${lab}<span class="cnt">${cnt}</span></label>`).join("")}
+    </div>`;
+
+  return `<div class="v-fiesta">
+    <header class="site"><div class="wrap bar">
+      <div class="logo">Azah<span class="b">ar</span> 🌸</div>
+      <form class="searchbar" onsubmit="return false"><span>🔍</span><input placeholder="Busca flores, regalos, ocasiones…" aria-label="Buscar"></form>
+      <a class="navlink" href="#">Categorías</a>
+      <div class="cart">🛒 Carrito <span class="badge">3</span></div>
+    </div></header>
+
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <h1>Alegra su día con <em>flores frescas</em> 💐</h1>
+          <p>Pídelas hoy, se entregan hoy. Paga con Pago Móvil, Zelle o efectivo.</p>
+          <a class="btn" href="#">Ver todo →</a>
+        </div>
+        <div class="blob">${hero.e}</div>
+      </div>
+
+      <section class="block"><h2><span class="emo">🎁</span>Explora por categoría</h2><p class="sub">Encuentra justo lo que buscas</p>
+        <div class="bigcats">${bigcats}</div>
+      </section>
+
+      <section class="block"><h2><span class="emo">⭐</span>Los más pedidos</h2><p class="sub">Favoritos de nuestros clientes</p>
+        <div class="grid">${cards}</div>
+      </section>
+    </div>
+
+    ${anno("Detalle de producto")}
+    <div class="wrap"><section class="block"><div class="pdp">
+      <div class="tile maintile" style="aspect-ratio:4/3;background:linear-gradient(120deg,#ffe0d6,#ffd6e8 60%,#e6dcff)"><span class="emoji">${hero.e}</span></div>
+      <h1>${hero.n}</h1>
+      <div class="price">${money(hero.price)}</div>
+      <p>24 rosas rojas de tallo largo, frescas y listas para regalar. El clásico que nunca falla para decir "te quiero".</p>
+      <div class="ctas">
+        <button class="cta wa">🟢 Pedir por WhatsApp</button>
+        <button class="cta cart">Agregar al carrito</button>
+      </div>
+      <div class="tags"><span class="t">${hero.occ}</span><span class="t">${hero.ft}</span><span class="t" style="text-transform:capitalize">${hero.col}</span><span class="t">${hero.sz}</span></div>
+    </div></section></div>
+
+    ${anno("Búsqueda avanzada — resultados")}
+    <div class="wrap"><section class="block"><div class="search">
+      <aside class="facets">
+        ${facetGroup("Categoría", CATS.slice(0,6).map(c=>[c[2], (2+c[2].length%5)]), "radio")}
+        ${facetGroup("Precio", [["$0 – $25",6],["$25 – $50",19],["$50 – $100",15],["$100+",7]], "radio")}
+        ${facetGroup("Ocasión", OCCASIONS.slice(0,5).map(o=>[o, 3+o.length%6]))}
+        ${facetGroup("Color", ["rojo","rosa","amarillo","naranja","morado"].map(c=>[c.charAt(0).toUpperCase()+c.slice(1),3+c.length%5]), "checkbox", true)}
+        ${facetGroup("Tamaño", [["Pequeño",12],["Mediano",22],["Grande",16]], "radio")}
+      </aside>
+      <div>
+        <div class="results-head"><span class="n">34 resultados</span>
+          <select class="sel"><option>Destacados</option><option>Precio: menor</option><option>Precio: mayor</option><option>Nombre A–Z</option></select>
+        </div>
+        <div class="active-chips">
+          <span class="c">Ramos ✕</span><span class="c">Rojo ✕</span><span class="c">Cumpleaños ✕</span>
+          <span class="c clearall">Limpiar todo ✕</span>
+        </div>
+        <div class="grid">${results}</div>
+        <nav class="pager"><a href="#">‹</a><a class="on" href="#">1</a><a href="#">2</a><a href="#">3</a><a href="#">›</a></nav>
+      </div>
+    </div></section></div>
+
+    <footer class="site"><div class="wrap">Azahar 🌸 · Hecho con cariño en Caracas · WhatsApp +58 000-0000000 · © 2026</div></footer>
+  </div>`;
+}
+
+/* annotation label helper */
+function anno(txt){ return `<div class="anno"><span class="anno-pill">▸ Pantalla — ${txt}</span></div>`; }
+
+/* ---------------------------------------------------------------- switcher ---- */
+const VARIANTS = [
+  {key:"A", fn:mercado, name:"A — Mercado", desc:"Utilitario · búsqueda-primero"},
+  {key:"B", fn:jardin,  name:"B — Jardín",  desc:"Boutique editorial · imagen"},
+  {key:"C", fn:fiesta,  name:"C — Fiesta",  desc:"Regalo · colorido y redondo"}
+];
+
+function currentKey(){
+  const u = new URL(location.href);
+  const k = (u.searchParams.get("variant") || "A").toUpperCase();
+  return VARIANTS.some(v=>v.key===k) ? k : "A";
+}
+
+function render(){
+  const key = currentKey();
+  const v = VARIANTS.find(x=>x.key===key);
+  document.getElementById("app").innerHTML = v.fn();
+  document.getElementById("vname").textContent = v.name;
+  document.getElementById("vdesc").textContent = v.desc;
+  document.getElementById("dots").innerHTML = VARIANTS.map(x=>`<span class="dot ${x.key===key?'on':''}"></span>`).join("");
+  window.scrollTo(0,0);
+}
+
+function go(dir){
+  const keys = VARIANTS.map(v=>v.key);
+  let i = keys.indexOf(currentKey());
+  i = (i + dir + keys.length) % keys.length;
+  const u = new URL(location.href);
+  u.searchParams.set("variant", keys[i]);
+  history.replaceState(null,"",u);
+  render();
+}
+
+document.getElementById("prev").addEventListener("click", ()=>go(-1));
+document.getElementById("next").addEventListener("click", ()=>go(1));
+document.addEventListener("keydown", e=>{
+  const t = e.target;
+  if (t && (t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.isContentEditable)) return;
+  if (e.key==="ArrowLeft") go(-1);
+  if (e.key==="ArrowRight") go(1);
+});
+render();
+</script>
