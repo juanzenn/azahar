@@ -100,10 +100,18 @@ export const strings = {
   },
 
   home: {
-    // Placeholder until the home page is built against the catalog.
-    eyebrow: "Floristería en Caracas",
-    heading: "Flores que dicen lo que no cabe en un mensaje",
-    body: "Estamos preparando nuestra tienda en línea. Muy pronto vas a poder ver todo el catálogo y pedir por WhatsApp.",
+    heroEyebrow: "Colección de temporada",
+    heroHeading: "Ramos que dicen lo que las palabras callan",
+    heroBody:
+      "Composiciones artesanales de flores frescas, entregadas con cuidado en toda la ciudad.",
+    heroCta: "Ver producto",
+    heroSecondary: "Ver todo",
+    featuredEyebrow: "Selección del florista",
+    featuredHeading: "Favoritos de la casa",
+    categoriesEyebrow: "Explora la tienda",
+    categoriesHeading: "Comprar por categoría",
+    occasionEyebrow: "Para cada momento",
+    occasionHeading: "Comprar por ocasión",
   },
 
   about: {

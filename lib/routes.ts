@@ -12,6 +12,8 @@ export const routes = {
   search: "/buscar",
   searchFor: (query: string) =>
     query.trim() ? `/buscar?q=${encodeURIComponent(query.trim())}` : "/buscar",
+  searchByOccasion: (occasion: string) =>
+    `/buscar?occ=${encodeURIComponent(occasion)}`,
   product: (slug: string) => `/producto/${slug}`,
   cart: "/carrito",
   checkout: "/finalizar-compra",

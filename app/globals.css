@@ -19,6 +19,7 @@
   --jardin-hairline: #e7e2d8; /* borders, grid lines */
   --jardin-hairline-strong: #d8d2c6; /* input borders */
   --jardin-emerald: #1f4d3a; /* primary: CTAs, prices, active pagination */
+  --jardin-emerald-soft: #b9d3c4; /* eyebrows sitting on the emerald band */
   --jardin-plum: #5f2a52; /* secondary: eyebrows, "Limpiar todo" */
   --jardin-gold: #b08542; /* tertiary accents */
 
@@ -67,6 +68,7 @@
   --color-hairline: var(--jardin-hairline);
   --color-hairline-strong: var(--jardin-hairline-strong);
   --color-emerald: var(--jardin-emerald);
+  --color-emerald-soft: var(--jardin-emerald-soft);
   --color-plum: var(--jardin-plum);
   --color-gold: var(--jardin-gold);
 
@@ -127,5 +129,17 @@
   .eyebrow {
     @apply text-plum font-sans text-[11px] uppercase;
     letter-spacing: var(--tracking-eyebrow);
+  }
+
+  /* Soft floral wash behind the hero and product-detail imagery. Sits under
+     the photograph, so it shows through while the image loads and around any
+     image that does not fully cover its panel. */
+  .floral-ground {
+    background: radial-gradient(
+      120% 120% at 70% 20%,
+      #fbe3ec,
+      #e9d8e6 45%,
+      #cddfd2 100%
+    );
   }
 }
