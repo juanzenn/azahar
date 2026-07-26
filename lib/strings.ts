@@ -105,4 +105,40 @@ export const strings = {
     heading: "Flores que dicen lo que no cabe en un mensaje",
     body: "Estamos preparando nuestra tienda en línea. Muy pronto vas a poder ver todo el catálogo y pedir por WhatsApp.",
   },
+
+  about: {
+    title: "Nosotros",
+    eyebrow: "Nuestra historia",
+    heading: "Flores hechas a mano, desde Caracas",
+    intro:
+      "Azahar nació de algo muy simple: la convicción de que un ramo bien hecho dice cosas que cuesta poner en palabras. Llevamos años armando flores para los días importantes de nuestros clientes —y también para los martes cualquiera en los que alguien merece una sorpresa.",
+    paragraphs: [
+      {
+        heading: "Cada arreglo se hace el mismo día",
+        body: "Trabajamos con flor fresca de temporada y armamos cada pedido el día de la entrega. Nada se prepara con antelación ni se guarda en nevera esperando comprador: por eso lo que llega se ve como en la foto y dura lo que tiene que durar.",
+      },
+      {
+        heading: "Entregamos en Caracas y alrededores",
+        body: "Coordinamos la entrega a domicilio en el área metropolitana, o puedes retirar en tienda si te queda más cómodo. Tú eliges la fecha y, si quieres, la franja horaria; nosotros nos encargamos del resto.",
+      },
+      {
+        heading: "Pedidos por WhatsApp, sin complicaciones",
+        body: "Arma tu pedido aquí en la tienda y lo terminas por WhatsApp, con todos los datos ya escritos. Aceptamos Pago Móvil, transferencia, Zelle, Binance y efectivo contra entrega.",
+      },
+    ],
+    ctaHeading: "¿Buscas algo en particular?",
+    ctaBody:
+      "Escríbenos y te ayudamos a elegir. Si necesitas algo fuera del catálogo —un evento, una boda, un arreglo especial— también lo hacemos.",
+    ctaButton: "Escríbenos por WhatsApp",
+    ctaSecondary: "Ver el catálogo",
+  },
+
+  notFound: {
+    title: "Página no encontrada",
+    eyebrow: "Error 404",
+    heading: "No encontramos esta página",
+    body: "Puede que el enlace esté roto o que el producto ya no esté disponible. Prueba desde el inicio o busca en el catálogo.",
+    home: "Ir al inicio",
+    search: "Ver el catálogo",
+  },
 } as const;
