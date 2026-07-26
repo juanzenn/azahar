@@ -1,0 +1,131 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Azahar commits to a single warm light palette ("Jardín", Direction B from the
+ * ticket-08 prototype). Pinning the dark variant to an explicit `.dark`
+ * ancestor — which nothing ever sets — stops a viewer's OS dark preference from
+ * hijacking the design through shadcn's built-in `dark:` utilities.
+ */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ---- Jardín palette -------------------------------------------------- */
+  --jardin-ground: #faf8f3; /* warm off-white page background */
+  --jardin-panel: #f2eee5; /* raised surfaces, image tiles */
+  --jardin-ink: #21201d; /* body text */
+  --jardin-muted: #6d6a63; /* secondary text, counts */
+  --jardin-hairline: #e7e2d8; /* borders, grid lines */
+  --jardin-hairline-strong: #d8d2c6; /* input borders */
+  --jardin-emerald: #1f4d3a; /* primary: CTAs, prices, active pagination */
+  --jardin-plum: #5f2a52; /* secondary: eyebrows, "Limpiar todo" */
+  --jardin-gold: #b08542; /* tertiary accents */
+
+  /* ---- Typography ------------------------------------------------------ */
+  /* System stacks by design: no webfont request, so the static build stays
+     host-agnostic and has nothing to block first paint. */
+  --font-body: ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia,
+    "Times New Roman", serif;
+
+  /* ---- shadcn semantic tokens, mapped onto Jardín ---------------------- */
+  /* shadcn primitives read these, so they inherit the palette for free. */
+  --background: var(--jardin-ground);
+  --foreground: var(--jardin-ink);
+  --card: var(--jardin-ground);
+  --card-foreground: var(--jardin-ink);
+  --popover: var(--jardin-ground);
+  --popover-foreground: var(--jardin-ink);
+  --primary: var(--jardin-emerald);
+  --primary-foreground: var(--jardin-ground);
+  --secondary: var(--jardin-panel);
+  --secondary-foreground: var(--jardin-ink);
+  --muted: var(--jardin-panel);
+  --muted-foreground: var(--jardin-muted);
+  --accent: var(--jardin-panel);
+  --accent-foreground: var(--jardin-ink);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: var(--jardin-hairline);
+  --input: var(--jardin-hairline-strong);
+  --ring: var(--jardin-emerald);
+
+  /* Editorial, near-square corners. Pills and circles are asked for
+     explicitly where the design wants them (chips, swatches, pagination). */
+  --radius: 0.125rem;
+}
+
+@theme inline {
+  /* Jardín tokens as named utilities: bg-ground, text-ink, border-hairline,
+     text-plum, … Note `emerald` also exists as a numbered Tailwind scale;
+     prefer `text-primary` for the brand green in semantic contexts. */
+  --color-ground: var(--jardin-ground);
+  --color-panel: var(--jardin-panel);
+  --color-ink: var(--jardin-ink);
+  --color-ink-muted: var(--jardin-muted);
+  --color-hairline: var(--jardin-hairline);
+  --color-hairline-strong: var(--jardin-hairline-strong);
+  --color-emerald: var(--jardin-emerald);
+  --color-plum: var(--jardin-plum);
+  --color-gold: var(--jardin-gold);
+
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-display);
+  --font-heading: var(--font-display);
+
+  --tracking-eyebrow: 0.28em;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-ground text-ink;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-serif font-medium tracking-tight;
+  }
+}
+
+@layer components {
+  /* Uppercase, wide-spaced label sitting above a serif heading, and the
+     category line on a product card. Plum by design. */
+  .eyebrow {
+    @apply text-plum font-sans text-[11px] uppercase;
+    letter-spacing: var(--tracking-eyebrow);
+  }
+}
