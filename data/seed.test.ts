@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { categories } from "@/data/categories";
@@ -211,5 +214,32 @@ describe("catalog seam", () => {
     await expect(catalog.listProductsByCategory("no-existe")).resolves.toEqual(
       [],
     );
+  });
+});
+
+describe("image assets", () => {
+  // A typo'd image path is invisible until someone opens the page it breaks,
+  // so every reference in the data is resolved against the files on disk.
+  const publicDir = join(process.cwd(), "public");
+
+  it("has a real file behind every product image reference", () => {
+    for (const product of products) {
+      for (const image of product.images) {
+        expect(
+          existsSync(join(publicDir, image)),
+          `missing image for ${product.slug}: ${image}`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("has a real file behind every category hero reference", () => {
+    for (const category of categories) {
+      expect(category.heroImage).toBeDefined();
+      expect(
+        existsSync(join(publicDir, category.heroImage!)),
+        `missing hero for ${category.slug}: ${category.heroImage}`,
+      ).toBe(true);
+    }
   });
 });
