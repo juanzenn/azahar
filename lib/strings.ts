@@ -1,3 +1,53 @@
+import type { Colour, FlowerType, Occasion, Size } from "@/lib/catalog/types";
+
+/**
+ * Display labels for the facet vocabularies.
+ *
+ * Slugs are ASCII so they are safe in URLs; these are what a customer reads,
+ * accents and all. Typed as complete records, so adding a facet value without
+ * giving it a label is a compile error.
+ */
+export const facetLabels = {
+  occasion: {
+    amor: "Amor y romance",
+    cumpleanos: "Cumpleaños",
+    aniversario: "Aniversario",
+    bodas: "Bodas",
+    condolencias: "Condolencias",
+    "dia-de-la-madre": "Día de la Madre",
+    graduacion: "Graduación",
+    "nuevo-bebe": "Nuevo bebé",
+  } satisfies Record<Occasion, string>,
+
+  flowerType: {
+    rosas: "Rosas",
+    girasoles: "Girasoles",
+    orquideas: "Orquídeas",
+    lirios: "Lirios",
+    tulipanes: "Tulipanes",
+    gerberas: "Gerberas",
+    claveles: "Claveles",
+    mixtas: "Flores mixtas",
+  } satisfies Record<FlowerType, string>,
+
+  colour: {
+    rojo: "Rojo",
+    rosado: "Rosado",
+    blanco: "Blanco",
+    amarillo: "Amarillo",
+    naranja: "Naranja",
+    morado: "Morado",
+    azul: "Azul",
+    multicolor: "Multicolor",
+  } satisfies Record<Colour, string>,
+
+  size: {
+    pequeno: "Pequeño",
+    mediano: "Mediano",
+    grande: "Grande",
+  } satisfies Record<Size, string>,
+} as const;
+
 /**
  * Every piece of user-facing copy.
  *
