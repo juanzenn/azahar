@@ -114,6 +114,17 @@ export const strings = {
     occasionHeading: "Comprar por ocasión",
   },
 
+  breadcrumbs: {
+    /** Names the trail for screen readers; never rendered visually. */
+    label: "Ruta de navegación",
+    home: "Inicio",
+  },
+
+  product: {
+    relatedEyebrow: "También te puede gustar",
+    relatedHeading: "Más de esta categoría",
+  },
+
   about: {
     title: "Nosotros",
     eyebrow: "Nuestra historia",

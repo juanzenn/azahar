@@ -13,6 +13,7 @@ import type { CatalogSource } from "@/lib/catalog/source";
  */
 export const catalog: CatalogSource = staticSource;
 
+export { relatedProducts } from "@/lib/catalog/related";
 export type { CatalogSource } from "@/lib/catalog/source";
 export type {
   Category,
