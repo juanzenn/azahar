@@ -38,5 +38,5 @@ Spec: [`spec.md`](../../spec.md) §1 (rendering & stack), §5 (global chrome), �
 - [x] A `formatPrice` helper renders USD from integer cents and is the only place price formatting happens.
 - [x] **Vitest configured** (resolving the `@/*` alias) **plus React Testing Library**, with at least one real passing test — `formatPrice` is the natural first subject. `npm test` is green.
 - [x] ESLint (flat config, `eslint-config-next`) + Prettier + `prettier-plugin-tailwindcss`; lint passes clean.
-- [x] npm as the package manager; **Node 26** pinned via `.nvmrc` and `engines`.
+- [x] npm as the package manager; **Node 24 LTS** pinned via `.nvmrc` and `engines: "24.x"` (was 26 until the first deploy — see ticket 02 for why it settled back).
 - [x] Nothing in the build depends on Vercel specifically — the static output is host-agnostic.

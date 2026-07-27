@@ -15,7 +15,7 @@ This is the terminal deliverable, not a decision: nothing is left to decide (all
 Assemble into a coherent spec (not just concatenated ticket answers), covering:
 
 1. **Overview & scope** — read-only storefront; what's in, what's out (from Destination + Out-of-scope).
-2. **Stack & conventions** — static Next export, App Router, Tailwind + shadcn, Spanish-only, USD, Node 26 (ticket 02).
+2. **Stack & conventions** — static Next export, App Router, Tailwind + shadcn, Spanish-only, USD, Node 24 LTS (ticket 02).
 3. **Domain model & data shape** — Product/Category/facets (ticket 01), the `CatalogSource` seam + `data/` modules + images (ticket 04).
 4. **Catalog content** — 10 categories, facet vocabularies, the concrete 50-product seed + image pool (ticket 06, [`seed/products.md`](../seed/products.md)).
 5. **Information architecture** — routes, header/footer, home composition, URL scheme (ticket 05).

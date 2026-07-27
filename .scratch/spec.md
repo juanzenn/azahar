@@ -220,7 +220,7 @@ can later be swapped to a hosted API without the UI changing.
   module.
 - **USD only**, no VES reference and no FX rate (would break the static posture and go stale). One
   `formatPrice(cents)` helper renders every price.
-- **npm**; Node 26 pinned. ESLint (flat config, `eslint-config-next`) + Prettier +
+- **npm**; Node 24 LTS pinned (`engines: "24.x"` — also the deploy target; see ticket 02). ESLint (flat config, `eslint-config-next`) + Prettier +
   `prettier-plugin-tailwindcss`.
 - **Deploy host-agnostic**; Vercel is the zero-config reference but nothing depends on it.
 - Flat repo layout (no `src/`): `app/`, `components/` (with `components/ui/` for shadcn),

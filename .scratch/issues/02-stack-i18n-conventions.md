@@ -53,4 +53,10 @@ azahar/
 
 - **TypeScript strict**, `@/*` path alias.
 - **ESLint** (`eslint-config-next`, flat config) + **Prettier** + `prettier-plugin-tailwindcss` (class ordering).
-- Package manager **npm**. Runtime **Node 26** (`.nvmrc` / `engines` pin — bumped from 24 at the dev's request).
+- Package manager **npm**. Runtime **Node 24 LTS** (`.nvmrc` / `engines: "24.x"`).
+  - History: originally 24, bumped to **26** at the dev's request during this ticket, then settled back
+    to 24 at the first deploy. Vercel's build image rejects `>=26` outright ("invalid or discontinued
+    Node.js Version"), and under `output: "export"` Node is only the **build** runtime — nothing runs it
+    in production, so the version buys nothing at runtime and cost a deploy. 24 is the LTS line
+    (Krypton); 26 is Current. Pinning the deploy target also makes CI, which reads `.nvmrc`, test the
+    version that actually ships.

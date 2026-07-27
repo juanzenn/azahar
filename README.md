@@ -154,7 +154,7 @@ demo shop. See [Configuration](#configuration).
 | UI                   | React 19, Tailwind CSS 4, shadcn/ui primitives vendored into the repo (not a runtime dependency) |
 | Language             | TypeScript, `strict`, no `any`, path alias `@/*`                                                 |
 | Tests                | Vitest 4 + React Testing Library, jsdom — 315 tests                                              |
-| Tooling              | ESLint (flat config), Prettier + `prettier-plugin-tailwindcss`, Node 26, npm                     |
+| Tooling              | ESLint (flat config), Prettier + `prettier-plugin-tailwindcss`, Node 24 LTS, npm                 |
 | Runtime dependencies | None for logic. Search, cart, order and payment are dependency-free                              |
 
 `next/image` runs `unoptimized` because a static export has no server to resize anything; it stays for
@@ -163,7 +163,7 @@ layout stability and lazy loading.
 ## Running it locally
 
 ```bash
-nvm use          # Node 26, pinned in .nvmrc
+nvm use          # Node 24 LTS, pinned in .nvmrc
 npm install
 npm run dev      # http://localhost:3000
 ```

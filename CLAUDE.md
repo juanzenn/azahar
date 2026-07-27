@@ -27,7 +27,9 @@ npx vitest run lib/search.test.ts
 npx vitest run -t "accent-insensitive"
 ```
 
-Node 26 is pinned (`.nvmrc`, `engines`). Package manager is npm.
+Node 24 LTS is pinned (`.nvmrc`, `engines: "24.x"`). Package manager is npm. The version is pinned to
+LTS rather than Current because it is also the deploy target: Vercel's build image supports up to 24,
+and under `output: "export"` Node is only ever the _build_ runtime — nothing runs it in production.
 
 ## What this is
 
