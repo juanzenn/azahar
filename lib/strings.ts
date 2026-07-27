@@ -1,4 +1,9 @@
 import type { Colour, FlowerType, Occasion, Size } from "@/lib/catalog/types";
+import { formatPrice } from "@/lib/format";
+// Type-only, so nothing imports back at runtime: the search module reads
+// `facetLabels` from here, and price range is its vocabulary rather than the
+// domain model's because it is derived from the price.
+import type { FacetCounts, PriceRange, Sort } from "@/lib/search";
 
 /**
  * Display labels for the facet vocabularies.
@@ -46,7 +51,29 @@ export const facetLabels = {
     mediano: "Mediano",
     grande: "Grande",
   } satisfies Record<Size, string>,
+
+  /**
+   * The price buckets, whose boundaries in cents are `lib/search`'s. Written
+   * through `formatPrice` like every other amount in the app, which also puts
+   * the boundary a label claims next to the number a customer reads.
+   */
+  priceRange: {
+    "0-25": `${formatPrice(0)} – ${formatPrice(2500)}`,
+    "25-50": `${formatPrice(2500)} – ${formatPrice(5000)}`,
+    "50-100": `${formatPrice(5000)} – ${formatPrice(10000)}`,
+    "100+": `${formatPrice(10000)}+`,
+  } satisfies Record<PriceRange, string>,
 } as const;
+
+/**
+ * "24 resultados" / "1 resultado" — the count the results header and the mobile
+ * sheet's footer both read from, so the two can never disagree.
+ */
+const results = (count: number) =>
+  count === 1 ? "1 resultado" : `${count} resultados`;
+
+/** A customer's own words, quoted back to them the same way everywhere. */
+const quoted = (query: string) => `«${query}»`;
 
 /**
  * Every piece of user-facing copy.
@@ -118,6 +145,74 @@ export const strings = {
     /** Names the trail for screen readers; never rendered visually. */
     label: "Ruta de navegación",
     home: "Inicio",
+  },
+
+  search: {
+    title: "Buscar",
+    description:
+      "Filtra el catálogo por categoría, ocasión, tipo de flor, color, tamaño y precio.",
+
+    /** The in-page box that live-filters the results. */
+    queryLabel: "Buscar en el catálogo",
+    queryPlaceholder: "Buscar en la colección…",
+
+    /** The mobile trigger and the sheet it opens. */
+    filters: "Filtros",
+    filtersWithCount: (count: number) => `Filtros · ${count}`,
+    closeFilters: "Cerrar filtros",
+    showResults: (count: number) => `Ver ${results(count)}`,
+
+    resultCount: results,
+    resultCountFor: (count: number, query: string) =>
+      `${results(count)} para ${quoted(query)}`,
+    /** The query's own chip, alongside the facet chips. */
+    queryChip: quoted,
+    /** A category page counts products, not search results. */
+    productCount: (count: number) =>
+      count === 1 ? "1 producto" : `${count} productos`,
+
+    sortLabel: "Ordenar",
+    sorts: {
+      featured: "Destacados",
+      "price-asc": "Precio: de menor a mayor",
+      "price-desc": "Precio: de mayor a menor",
+      name: "Nombre: A–Z",
+    } satisfies Record<Sort, string>,
+
+    /** Serif headings above each facet group, in sidebar order. */
+    groups: {
+      category: "Categoría",
+      price: "Precio",
+      occasion: "Ocasión",
+      flowerType: "Tipo de flor",
+      colour: "Color",
+      size: "Tamaño",
+    } satisfies Record<keyof FacetCounts, string>,
+
+    /**
+     * The explicit clear row single-select groups get instead of
+     * click-to-deselect. Multi-select groups clear by unchecking.
+     */
+    anyValue: {
+      category: "Todas las categorías",
+      price: "Cualquier precio",
+      size: "Cualquier tamaño",
+    } satisfies Record<"category" | "price" | "size", string>,
+
+    pagination: "Paginación",
+    page: (number: number) => `Página ${number}`,
+    previousPage: "Página anterior",
+    nextPage: "Página siguiente",
+
+    activeFiltersLabel: "Filtros activos",
+    removeFilter: (label: string) => `Quitar filtro: ${label}`,
+    clearAll: "Limpiar todo",
+    clearFilters: "Limpiar filtros",
+
+    emptyHeading: "No encontramos productos que coincidan con tu búsqueda.",
+    emptyBody: "Revisa la ortografía o ajusta los filtros.",
+    suggestionsEyebrow: "Del catálogo",
+    suggestionsHeading: "Quizás te interese",
   },
 
   product: {

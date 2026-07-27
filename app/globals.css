@@ -23,6 +23,26 @@
   --jardin-plum: #5f2a52; /* secondary: eyebrows, "Limpiar todo" */
   --jardin-gold: #b08542; /* tertiary accents */
 
+  /* ---- Colour-facet swatches ------------------------------------------- */
+  /* Not part of the palette: these stand for the *flowers*, so they are the
+     colours a customer names rather than the ones the site is painted in.
+     `multicolor` is a wheel because it is not one colour. */
+  --swatch-rojo: #c1362f;
+  --swatch-rosado: #e3a2bd;
+  --swatch-blanco: #ffffff;
+  --swatch-amarillo: #e8c04c;
+  --swatch-naranja: #df8a3d;
+  --swatch-morado: #7d5296;
+  --swatch-azul: #5b7fb4;
+  --swatch-multicolor: conic-gradient(
+    from 210deg,
+    #c1362f,
+    #e8c04c 25%,
+    #7d5296 55%,
+    #5b7fb4 75%,
+    #c1362f
+  );
+
   /* ---- Typography ------------------------------------------------------ */
   /* System stacks by design: no webfont request, so the static build stays
      host-agnostic and has nothing to block first paint. */

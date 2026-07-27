@@ -56,6 +56,10 @@ function PaginationLink({
       nativeButton={false}
       render={
         <a
+          // The Button primitive labels anything that is not a native button
+          // `role="button"`; these are real hrefs to real pages, so they keep
+          // link semantics. Before the spread, so a caller can still override.
+          role="link"
           aria-current={isActive ? "page" : undefined}
           data-slot="pagination-link"
           data-active={isActive}
