@@ -184,9 +184,17 @@ rather than a filter that silently matches nothing.
   display labels are typed as complete records, so adding a facet value without a label fails to
   compile.
 - **Every price renders through `formatPrice(cents)`** in `lib/format.ts`. USD only, no VES, no FX.
-- **What the shop owner can change lives in `lib/config.ts`** — WhatsApp number, hours, location and
-  the flat delivery fee, with the five payment rails to follow. Never inline one of these at a call
-  site: pages read config and pass it down (see `app/finalizar-compra/page.tsx`).
+- **What the shop owner can change lives in `lib/config.ts`** — WhatsApp number, hours, location, the
+  flat delivery fee and the five payment rails. Never inline one of these at a call site: pages read
+  config and pass it down (see `app/finalizar-compra/page.tsx`).
+- **`lib/config.ts` owns the shape and the defaults; the environment owns the values.** Every field
+  reads a `NEXT_PUBLIC_*` variable through `lib/env.ts` and falls back to a placeholder, so the repo
+  carries no real bank account and a fresh clone still builds a working demo shop. `.env.example` is
+  the manifest, and `lib/config.test.ts` holds it and the module to the same list. Three cases, on
+  purpose: **absent** falls back (and `next.config.ts` warns once per build), **set-but-empty** is a
+  deliberate blank (a Pay ID with no wallet), and **malformed** — `ENABLED=maybe`, `FEE_CENTS=5.50` —
+  fails the build, because there is no safe guess at a payment detail. Adding a config field means
+  adding the read, the placeholder and the `.env.example` line together.
 - **Theme tokens over hex.** `app/globals.css` defines the "Jardín" palette as CSS variables and maps
   them onto shadcn's semantic tokens, exposed as utilities: `bg-ground`, `text-ink`, `text-ink-muted`,
   `border-hairline`, `text-plum`, `text-gold`. Prefer `text-primary` for the brand emerald. The site
