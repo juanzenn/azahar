@@ -17,16 +17,16 @@ Spec: [`spec.md`](../../spec.md) §4 (images), §1 (static export consequences).
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] All **19 product image files** exist at the manifest's filenames (subject-named and reused across the 50 products — e.g. one red-rose-bouquet file serves several products).
-- [ ] All **10 category hero files** exist, one per category slug.
-- [ ] Placeholders are **portrait aspect** matching the card treatment, so no downstream layout is designed against the wrong proportions. Each is visually distinguishable (subject label and/or a distinct tint from the Jardín palette) rather than 29 identical grey boxes — a wrong image must be *noticeable*.
-- [ ] Filenames match the manifest **exactly**, since ticket 14 swaps files in place at these paths.
-- [ ] Images are referenced from the catalog data as **complete root-relative reference strings** the UI never stitches together from parts. This is what lets a local path become an absolute CDN URL under a future API with no UI change.
-- [ ] Rendering goes through `next/image` with **`unoptimized`** — static export means no server-side resizing — while keeping layout stability and lazy loading.
-- [ ] **No runtime hotlinking** to any external host; every file is served from the build output.
-- [ ] Every image reference in the seed data resolves to a file that actually exists. Worth asserting in a test — a typo'd path is otherwise invisible until someone looks at the page.
+- [x] All **19 product image files** exist at the manifest's filenames (subject-named and reused across the 50 products — e.g. one red-rose-bouquet file serves several products).
+- [x] All **10 category hero files** exist, one per category slug.
+- [x] Placeholders are **portrait aspect** matching the card treatment, so no downstream layout is designed against the wrong proportions. Each is visually distinguishable (subject label and/or a distinct tint from the Jardín palette) rather than 29 identical grey boxes — a wrong image must be *noticeable*.
+- [x] Filenames match the manifest **exactly**, since ticket 14 swaps files in place at these paths.
+- [x] Images are referenced from the catalog data as **complete root-relative reference strings** the UI never stitches together from parts. This is what lets a local path become an absolute CDN URL under a future API with no UI change.
+- [x] Rendering goes through `next/image` with **`unoptimized`** — static export means no server-side resizing — while keeping layout stability and lazy loading.
+- [x] **No runtime hotlinking** to any external host; every file is served from the build output.
+- [x] Every image reference in the seed data resolves to a file that actually exists. Worth asserting in a test — a typo'd path is otherwise invisible until someone looks at the page.
 
 ## Note
 

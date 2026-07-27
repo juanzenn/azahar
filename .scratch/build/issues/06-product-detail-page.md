@@ -12,14 +12,14 @@ Spec: [`spec.md`](../../spec.md) §5 (routes, breadcrumbs, related row), §10 (v
 
 **Blocked by:** 02, 03
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `/producto/[slug]` is a static Server Component reading through the seam, with all 50 product pages prerendered at build time.
-- [ ] A **large portrait photograph**, edge-to-edge and photography-forward, with a soft radial floral ground behind it.
-- [ ] The product's **full description**, its serif name, its uppercase category eyebrow, and its price in emerald via `formatPrice`.
-- [ ] **Breadcrumbs**: `Inicio / {primary category} / {product name}`, derived from the product's single category, with working links.
-- [ ] A **"Más de esta categoría" row**: other products from the same primary category, the current product excluded, capped at ~4, rendered with the same product card as the home page.
-- [ ] An **unknown slug calls `notFound()`** and lands on the Spanish 404 — driven by the seam returning `null`, not by a thrown error.
-- [ ] The page is fully static with near-zero client JS — nothing on it is interactive yet.
-- [ ] All copy from the strings module; the card component is reused, not re-implemented.
-- [ ] Responsive: image and copy stack sensibly on a phone without cropping the photograph awkwardly.
+- [x] `/producto/[slug]` is a static Server Component reading through the seam, with all 50 product pages prerendered at build time.
+- [x] A **large portrait photograph**, edge-to-edge and photography-forward, with a soft radial floral ground behind it.
+- [x] The product's **full description**, its serif name, its uppercase category eyebrow, and its price in emerald via `formatPrice`.
+- [x] **Breadcrumbs**: `Inicio / {primary category} / {product name}`, derived from the product's single category, with working links.
+- [x] A **"Más de esta categoría" row**: other products from the same primary category, the current product excluded, capped at ~4, rendered with the same product card as the home page.
+- [x] An **unknown slug calls `notFound()`** and lands on the Spanish 404 — driven by the seam returning `null`, not by a thrown error.
+- [x] The page is fully static with near-zero client JS — nothing on it is interactive yet.
+- [x] All copy from the strings module; the card component is reused, not re-implemented.
+- [x] Responsive: image and copy stack sensibly on a phone without cropping the photograph awkwardly.

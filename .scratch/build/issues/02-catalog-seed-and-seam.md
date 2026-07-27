@@ -14,9 +14,9 @@ Spec: [`spec.md`](../../spec.md) §2 (domain model), §3 (data source & seam), �
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `Product` and `Category` types match the locked shape — inlined here because it fixes cardinality more precisely than prose:
+- [x] `Product` and `Category` types match the locked shape — inlined here because it fixes cardinality more precisely than prose:
 
   ```ts
   type Category = {
@@ -39,10 +39,10 @@ Spec: [`spec.md`](../../spec.md) §2 (domain model), §3 (data source & seam), �
   }
   ```
 
-- [ ] Facet vocabularies are enumerated as types or const unions so an invalid facet value is a **compile error**: occasion ×8, flower type ×8, colour ×8, size ×3 (slugs per the seed asset — ASCII, URL-safe; display labels are accented Spanish).
-- [ ] All **10 categories** transcribed with name, description and hero image reference.
-- [ ] All **50 products** transcribed with every field concrete, typed against the shape above.
-- [ ] `CatalogSource` exists as a **TypeScript interface** with exactly these six async methods, and a static implementation satisfying it:
+- [x] Facet vocabularies are enumerated as types or const unions so an invalid facet value is a **compile error**: occasion ×8, flower type ×8, colour ×8, size ×3 (slugs per the seed asset — ASCII, URL-safe; display labels are accented Spanish).
+- [x] All **10 categories** transcribed with name, description and hero image reference.
+- [x] All **50 products** transcribed with every field concrete, typed against the shape above.
+- [x] `CatalogSource` exists as a **TypeScript interface** with exactly these six async methods, and a static implementation satisfying it:
 
   ```ts
   listProducts():               Promise<Product[]>
@@ -53,15 +53,15 @@ Spec: [`spec.md`](../../spec.md) §2 (domain model), §3 (data source & seam), �
   listProductsByCategory(slug): Promise<Product[]>
   ```
 
-- [ ] **Every method is async**, even though the static source resolves immediately — the future API is async, so this keeps the swap a pure behind-the-signature change with no call site moving.
-- [ ] The two `getBySlug` methods return **`null`** on a miss (pages will translate that to `notFound()`).
-- [ ] There is **no `search` method** on the seam, deliberately — a build-time search cannot see runtime user filters. Search is ticket 07.
-- [ ] A single module re-exports the **active** source; consumers import from the seam and can never tell which implementation is behind it. Nothing outside the seam imports the data modules directly.
-- [ ] **Seed invariant tests** pass, so a transcription slip fails the build instead of producing silent dead ends:
-  - [ ] 50 products, every `slug` unique and ASCII-hyphenated
-  - [ ] category spread 8/7/6/5/5/5/4/4/3/3 across ramos → detalles
-  - [ ] price-bucket coverage 9/19/15/7 using boundaries `<2500` / `2500–4999` / `5000–9999` / `>=10000` cents
-  - [ ] exactly 7 featured, with the flagship (`ramo-deluxe-24-rosas`) first
-  - [ ] **every facet value has ≥3 products** — no filter can dead-end
-  - [ ] every product has exactly one valid `categorySlug`, an integer `priceUsdCents`, and at least one image
-  - [ ] the three foliage plants having **empty** `flowerTypes`/`colours` is asserted as intentional, not treated as a failure
+- [x] **Every method is async**, even though the static source resolves immediately — the future API is async, so this keeps the swap a pure behind-the-signature change with no call site moving.
+- [x] The two `getBySlug` methods return **`null`** on a miss (pages will translate that to `notFound()`).
+- [x] There is **no `search` method** on the seam, deliberately — a build-time search cannot see runtime user filters. Search is ticket 07.
+- [x] A single module re-exports the **active** source; consumers import from the seam and can never tell which implementation is behind it. Nothing outside the seam imports the data modules directly.
+- [x] **Seed invariant tests** pass, so a transcription slip fails the build instead of producing silent dead ends:
+  - [x] 50 products, every `slug` unique and ASCII-hyphenated
+  - [x] category spread 8/7/6/5/5/5/4/4/3/3 across ramos → detalles
+  - [x] price-bucket coverage 9/19/15/7 using boundaries `<2500` / `2500–4999` / `5000–9999` / `>=10000` cents
+  - [x] exactly 7 featured, with the flagship (`ramo-deluxe-24-rosas`) first
+  - [x] **every facet value has ≥3 products** — no filter can dead-end
+  - [x] every product has exactly one valid `categorySlug`, an integer `priceUsdCents`, and at least one image
+  - [x] the three foliage plants having **empty** `flowerTypes`/`colours` is asserted as intentional, not treated as a failure

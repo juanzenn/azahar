@@ -13,12 +13,12 @@ Spec: [`spec.md`](../../spec.md) §1 (rendering & stack), §5 (global chrome), �
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Next.js (latest stable major) on the App Router, configured for **fully static export** — no runtime server; `npm run build` emits static files.
-- [ ] TypeScript `strict: true` with the `@/*` path alias; flat repo layout (no `src/`).
-- [ ] Tailwind CSS installed, plus shadcn/ui primitives copied in (no runtime dependency). At minimum the primitives later tickets need are available: Sheet, Select, Pagination, Checkbox, RadioGroup.
-- [ ] The **Jardín palette** is wired into the Tailwind/shadcn theme as named tokens, not scattered hex literals (values from the ticket-08 prototype):
+- [x] Next.js (latest stable major) on the App Router, configured for **fully static export** — no runtime server; `npm run build` emits static files.
+- [x] TypeScript `strict: true` with the `@/*` path alias; flat repo layout (no `src/`).
+- [x] Tailwind CSS installed, plus shadcn/ui primitives copied in (no runtime dependency). At minimum the primitives later tickets need are available: Sheet, Select, Pagination, Checkbox, RadioGroup.
+- [x] The **Jardín palette** is wired into the Tailwind/shadcn theme as named tokens, not scattered hex literals (values from the ticket-08 prototype):
 
   | Token | Value | Use |
   |---|---|---|
@@ -31,12 +31,12 @@ Spec: [`spec.md`](../../spec.md) §1 (rendering & stack), §5 (global chrome), �
   | secondary (plum) | `#5f2a52` | eyebrows, "Limpiar todo" |
   | tertiary (gold) | `#b08542` | accents |
 
-- [ ] Typography set up: **serif display** for logo/headings/product names (`ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif`), **sans** for body/UI/prices (`ui-sans-serif, system-ui`), and an eyebrow style that is uppercase with ~`.28em` letter-spacing.
-- [ ] **Sticky header on every page**: wordmark linking home, a prominent persistent search bar that navigates to global search on Enter and collapses to an expandable icon on mobile, a plain "Categorías" link (no dropdown), and a cart icon with a badge slot. The badge shows nothing until the cart ticket wires it.
-- [ ] **Footer on every page**: contact block (WhatsApp CTA, phone, hours, location), accepted payment methods as trust signals, category links, about link, copyright.
-- [ ] All user-facing Spanish copy lives in a **single strings module** — no Spanish string literals inline in components.
-- [ ] A `formatPrice` helper renders USD from integer cents and is the only place price formatting happens.
-- [ ] **Vitest configured** (resolving the `@/*` alias) **plus React Testing Library**, with at least one real passing test — `formatPrice` is the natural first subject. `npm test` is green.
-- [ ] ESLint (flat config, `eslint-config-next`) + Prettier + `prettier-plugin-tailwindcss`; lint passes clean.
-- [ ] npm as the package manager; **Node 26** pinned via `.nvmrc` and `engines`.
-- [ ] Nothing in the build depends on Vercel specifically — the static output is host-agnostic.
+- [x] Typography set up: **serif display** for logo/headings/product names (`ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif`), **sans** for body/UI/prices (`ui-sans-serif, system-ui`), and an eyebrow style that is uppercase with ~`.28em` letter-spacing.
+- [x] **Sticky header on every page**: wordmark linking home, a prominent persistent search bar that navigates to global search on Enter and collapses to an expandable icon on mobile, a plain "Categorías" link (no dropdown), and a cart icon with a badge slot. The badge shows nothing until the cart ticket wires it.
+- [x] **Footer on every page**: contact block (WhatsApp CTA, phone, hours, location), accepted payment methods as trust signals, category links, about link, copyright.
+- [x] All user-facing Spanish copy lives in a **single strings module** — no Spanish string literals inline in components.
+- [x] A `formatPrice` helper renders USD from integer cents and is the only place price formatting happens.
+- [x] **Vitest configured** (resolving the `@/*` alias) **plus React Testing Library**, with at least one real passing test — `formatPrice` is the natural first subject. `npm test` is green.
+- [x] ESLint (flat config, `eslint-config-next`) + Prettier + `prettier-plugin-tailwindcss`; lint passes clean.
+- [x] npm as the package manager; **Node 26** pinned via `.nvmrc` and `engines`.
+- [x] Nothing in the build depends on Vercel specifically — the static output is host-agnostic.

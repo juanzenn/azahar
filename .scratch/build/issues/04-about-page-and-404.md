@@ -11,13 +11,13 @@ Spec: [`spec.md`](../../spec.md) §5 (route inventory).
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `/nosotros` exists with real Spanish static copy about the shop — enough to establish credibility, not lorem ipsum.
-- [ ] A **Spanish not-found page** exists, styled inside the global chrome, with links back to the home page and the catalog.
-- [ ] Both pages are static Server Components carrying near-zero client JS.
-- [ ] Both sit inside the sticky header and footer from ticket 01, so navigation is never lost.
-- [ ] Both use the Jardín type scale and palette — serif headings, warm ground — rather than default browser styling.
-- [ ] All copy comes from the strings module; no inline Spanish literals.
-- [ ] The footer's about link points at `/nosotros` and works.
-- [ ] There is **no contact page** — contact deliberately lives in the footer only.
+- [x] `/nosotros` exists with real Spanish static copy about the shop — enough to establish credibility, not lorem ipsum.
+- [x] A **Spanish not-found page** exists, styled inside the global chrome, with links back to the home page and the catalog.
+- [x] Both pages are static Server Components carrying near-zero client JS.
+- [x] Both sit inside the sticky header and footer from ticket 01, so navigation is never lost.
+- [x] Both use the Jardín type scale and palette — serif headings, warm ground — rather than default browser styling.
+- [x] All copy comes from the strings module; no inline Spanish literals.
+- [x] The footer's about link points at `/nosotros` and works.
+- [x] There is **no contact page** — contact deliberately lives in the footer only.
