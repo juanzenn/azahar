@@ -108,6 +108,61 @@ describe("envReader.cents", () => {
   });
 });
 
+describe("envReader.url", () => {
+  it("returns the origin, with any trailing slash removed", () => {
+    const env = envReader();
+
+    expect(env.url(NAME, "https://azahar.com/", "https://fallback.test")).toBe(
+      "https://azahar.com",
+    );
+    expect(
+      env.url(NAME, "  https://azahar.com  ", "https://fallback.test"),
+    ).toBe("https://azahar.com");
+  });
+
+  it("keeps a path, minus its trailing slash", () => {
+    const env = envReader();
+
+    expect(env.url(NAME, "https://example.com/tienda/", "https://f.test")).toBe(
+      "https://example.com/tienda",
+    );
+  });
+
+  it("falls back when the variable is absent", () => {
+    const env = envReader();
+
+    expect(env.url(NAME, undefined, "https://fallback.test")).toBe(
+      "https://fallback.test",
+    );
+  });
+
+  // Unlike an account number, a blank site URL is not an answer: every canonical
+  // link, sitemap entry and Open Graph tag is built from it.
+  it("throws on an empty value rather than building relative links", () => {
+    const env = envReader();
+
+    expect(() => env.url(NAME, "", "https://fallback.test")).toThrow(NAME);
+  });
+
+  it("throws on a URL with no scheme, which is the typo that looks fine", () => {
+    const env = envReader();
+
+    expect(() => env.url(NAME, "azahar.com", "https://f.test")).toThrow(NAME);
+  });
+
+  it("throws on a scheme a browser would not follow", () => {
+    const env = envReader();
+
+    for (const bad of [
+      "ftp://azahar.com",
+      "javascript:alert(1)",
+      "not a url",
+    ]) {
+      expect(() => env.url(NAME, bad, "https://f.test")).toThrow(NAME);
+    }
+  });
+});
+
 describe("envReader.absent", () => {
   it("collects only the variables that were not set, in read order", () => {
     const env = envReader();

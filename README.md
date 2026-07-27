@@ -181,9 +181,9 @@ S3 bucket. Nothing in the build is host-specific.
 
 ## Configuration
 
-The shop's real details — WhatsApp number, hours, location, delivery fee and the five payment rails —
-are read from `NEXT_PUBLIC_*` variables at **build time**. Copy `.env.example` to `.env.local`, or set
-them in your host's environment.
+The shop's real details — WhatsApp number, hours, location, delivery fee, the five payment rails and
+the site's own URL — are read from `NEXT_PUBLIC_*` variables at **build time**. Copy `.env.example` to
+`.env.local`, or set them in your host's environment.
 
 ```bash
 cp .env.example .env.local
@@ -199,6 +199,11 @@ Every variable is optional and the module handles three cases on purpose:
 
 They are `NEXT_PUBLIC_` because they genuinely are public — a storefront prints its phone number and
 bank details on the page. Nothing secret belongs here.
+
+**For a real deploy, set `AZAHAR_STRICT_CONFIG=1`.** It turns the absent case from a warning into a
+refusal that lists every unset variable at once. The placeholders are what make a fresh clone runnable,
+but they include a Pago Móvil number and a Zelle account that are not your shop's, and a static export
+prints them into every page. It is not `NEXT_PUBLIC_`: the build reads it, and it never reaches a page.
 
 ## Testing
 
@@ -286,8 +291,9 @@ re-litigating anything. The judgment calls were still mine; the spec is where th
       config mode refuses a placeholder build, which is the half of that gate a unit test can't reach.
       Every gate runs even if an earlier one fails, so one push gets the full list.
 - [ ] Lighthouse pass — font loading strategy, explicit image dimensions, LCP on the hero.
-- [ ] SEO the static export deserves: `sitemap.xml`, `robots.txt`, per-page Open Graph images, and
-      `Product` JSON-LD, none of which need a server.
+- [x] SEO the static export deserves: `sitemap.xml` (64 content URLs, no checkout), `robots.txt`,
+      per-page canonicals and Open Graph using the real photography, and `Product` JSON-LD — none of
+      which need a server. Set `NEXT_PUBLIC_SITE_URL`; there is no request to infer a host from.
 
 **Hardening**
 

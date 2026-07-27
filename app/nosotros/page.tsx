@@ -4,11 +4,18 @@ import Link from "next/link";
 import { Container } from "@/components/container";
 import { whatsappChatUrl } from "@/lib/config";
 import { routes } from "@/lib/routes";
+import { openGraph } from "@/lib/seo";
 import { strings } from "@/lib/strings";
 
 export const metadata: Metadata = {
   title: `${strings.about.title} — ${strings.site.name}`,
   description: strings.about.intro,
+  alternates: { canonical: routes.about },
+  openGraph: openGraph({
+    title: `${strings.about.title} — ${strings.site.name}`,
+    description: strings.about.intro,
+    path: routes.about,
+  }),
 };
 
 export default function AboutPage() {

@@ -209,6 +209,29 @@ pressed Back doesn't lose the new cart. The deep-link stays re-openable, the raw
 with a `CopyButton`, and no copy anywhere claims the shop received anything: the customer still has to
 press send.
 
+### What crawlers see — decided at build time, like everything else
+
+`lib/seo.ts` is the fourth pure module: `absoluteUrl`, `sitemapPaths`, `productJsonLd` and
+`openGraph`. Nothing here can be derived, because a static export has no request to read a host from —
+the site's own URL arrives as an argument from `shopConfig.siteUrl` (`NEXT_PUBLIC_SITE_URL`), and
+`metadataBase` in the root layout is what lets every page write root-relative paths and still emit
+absolute tags.
+
+- `app/sitemap.ts` and `app/robots.ts` are metadata routes, exported as files like every page. **The
+  sitemap lists content, not the checkout**: cart, checkout and confirmation are in `robots.txt`'s
+  `Disallow` and carry `robots: { index: false }`, because what a crawler would store is the empty
+  state — a cart reads its contents from the visitor's own `localStorage`, and the confirmation page is
+  blank without the order in `sessionStorage` behind it.
+- **`openGraph()` exists because of a sharp edge**: Next _replaces_ a parent's `openGraph` with a
+  child's rather than merging, so every page that sets a title would silently drop `siteName` and
+  `locale`. Pages state only what is theirs and cannot forget the rest.
+- **Share images are the real photographs** — the product's own, the category's hero, the flagship on
+  the home page. There is no server to compose one at request time, and a photo of the thing being sold
+  beats anything generated.
+- `productJsonLd` claims **no `availability`**: the shop has no stock model, so `InStock` would be a
+  claim with nothing behind it. A missing property costs richness in a search result; an invented one
+  misleads a customer.
+
 ### Domain model
 
 Three terms, used consistently in code, copy and tests:
@@ -272,7 +295,10 @@ gets its own invariant tests (`data/seed.test.ts`: category spread, price-bucket
 with flagship first, every facet value ≥3 products, unique ASCII slugs).
 
 Logic tests concentrate on three pure seams — **search**, **cart**, **order** — each of which
-swallows a lot of behaviour behind one door and needs no DOM.
+swallows a lot of behaviour behind one door and needs no DOM. Four smaller pure modules are tested the
+same way: **payment**, **facets**, **seo** and **config-audit**. The metadata _routes_ that consume
+`lib/seo` are not tested — `app/sitemap.ts` and `app/robots.ts` are a read of the seam and a join, and
+the build exercises them like any other page.
 
 Islands get **deliberately thin wiring tests** that must not re-test that logic. Three exist:
 

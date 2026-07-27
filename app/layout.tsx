@@ -4,13 +4,28 @@ import { CartProvider } from "@/components/cart-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { catalog } from "@/lib/catalog";
+import { shopConfig } from "@/lib/config";
+import { routes } from "@/lib/routes";
+import { openGraph } from "@/lib/seo";
 import { strings } from "@/lib/strings";
 
 import "./globals.css";
 
+/**
+ * `metadataBase` is what lets every page below write `openGraph.url` and its
+ * images as plain root-relative paths and still emit absolute ones — a static
+ * export has no request to infer a host from, so without it Next warns and falls
+ * back to localhost. Each page then overrides only what is its own.
+ */
 export const metadata: Metadata = {
+  metadataBase: new URL(shopConfig.siteUrl),
   title: `${strings.site.name} — ${strings.site.tagline}`,
   description: strings.site.description,
+  openGraph: openGraph({
+    title: `${strings.site.name} — ${strings.site.tagline}`,
+    description: strings.site.description,
+    path: routes.home,
+  }),
 };
 
 /**

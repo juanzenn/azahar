@@ -19,10 +19,16 @@ import { absentShopConfig, shopConfig } from "@/lib/config";
 const source = readFileSync("lib/config.ts", "utf8");
 const manifest = readFileSync(".env.example", "utf8");
 
-/** Every `env.<reader>("NAME", process.env.NAME, fallback)` in the module. */
+/**
+ * Every `env.<reader>("NAME", process.env.NAME, fallback)` in the module.
+ *
+ * The reader kinds are listed rather than matched loosely, so adding one to
+ * `lib/env` without listing it here fails the manifest assertion below instead of
+ * quietly dropping that variable out of every check in this file.
+ */
 const reads = [
   ...source.matchAll(
-    /env\.(?:text|flag|cents)\(\s*"([A-Z0-9_]+)",\s*process\.env\.([A-Z0-9_]+),/g,
+    /env\.(?:text|flag|cents|url)\(\s*"([A-Z0-9_]+)",\s*process\.env\.([A-Z0-9_]+),/g,
   ),
 ].map(([, reported, accessed]) => ({ reported, accessed }));
 

@@ -8,6 +8,11 @@ import { strings } from "@/lib/strings";
 export const metadata: Metadata = {
   title: `${strings.cart.title} — ${strings.site.name}`,
   description: strings.cart.description,
+  // A cart's contents live in the visitor's own `localStorage`, so what a crawler
+  // would store is the empty state — a search result that shows the shop has
+  // nothing in it. `robots.txt` says the same; this is the copy that travels
+  // with the page.
+  robots: { index: false, follow: true },
 };
 
 /**

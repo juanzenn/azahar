@@ -31,6 +31,8 @@ export type EnvReader = {
   flag(name: string, raw: string | undefined, fallback: boolean): boolean;
   /** An integer count of minor units — `0` is a value, not a missing one. */
   cents(name: string, raw: string | undefined, fallback: number): number;
+  /** An absolute `http(s)` origin, trailing slash removed. Blank is not an answer. */
+  url(name: string, raw: string | undefined, fallback: string): string;
   /** The variables that were absent, in the order they were read. */
   readonly absent: readonly string[];
 };
@@ -95,6 +97,43 @@ export function envReader(): EnvReader {
       }
 
       return Number(value);
+    },
+
+    url(name, raw, fallback) {
+      const value = read(name, raw);
+      if (value === null) return fallback;
+
+      // Blank joins `flag` on the wrong side of the set-but-empty rule. An empty
+      // account number is a shop saying it has none; an empty site URL is not an
+      // answer to anything, and every canonical link, sitemap entry and Open
+      // Graph tag is built by joining a path onto it.
+      if (value === "") {
+        throw new Error(
+          `${name}: expected the site's own absolute URL (e.g. https://azahar.com), got an empty value.`,
+        );
+      }
+
+      let parsed: URL;
+      try {
+        parsed = new URL(value);
+      } catch {
+        // The typo that looks fine: `azahar.com` with no scheme. A relative
+        // reference cannot anchor an absolute URL, and would silently produce
+        // canonical tags pointing at nothing.
+        throw new Error(
+          `${name}: expected an absolute URL including the scheme (e.g. https://azahar.com), got "${value}".`,
+        );
+      }
+
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+        throw new Error(
+          `${name}: expected an http or https URL, got "${parsed.protocol}" in "${value}".`,
+        );
+      }
+
+      // One trailing slash or none is the difference between `/producto/x` and
+      // `//producto/x`, so it is settled here rather than at each join.
+      return value.replace(/\/+$/, "");
     },
   };
 }

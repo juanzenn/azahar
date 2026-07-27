@@ -10,6 +10,9 @@ import { strings } from "@/lib/strings";
 export const metadata: Metadata = {
   title: `${strings.checkout.title} — ${strings.site.name}`,
   description: strings.checkout.description,
+  // An empty form is nothing to index, and a checkout reached cold from a search
+  // result starts by redirecting a visitor who has no cart.
+  robots: { index: false, follow: true },
 };
 
 /**

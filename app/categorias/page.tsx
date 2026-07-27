@@ -6,11 +6,18 @@ import { Breadcrumbs, type Crumb } from "@/components/breadcrumbs";
 import { Container } from "@/components/container";
 import { catalog } from "@/lib/catalog";
 import { routes } from "@/lib/routes";
+import { openGraph } from "@/lib/seo";
 import { strings } from "@/lib/strings";
 
 export const metadata: Metadata = {
   title: `${strings.categories.title} — ${strings.site.name}`,
   description: strings.categories.description,
+  alternates: { canonical: routes.categories },
+  openGraph: openGraph({
+    title: `${strings.categories.title} — ${strings.site.name}`,
+    description: strings.categories.description,
+    path: routes.categories,
+  }),
 };
 
 /**

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -8,7 +9,32 @@ import { SectionHeading } from "@/components/section-heading";
 import { catalog, OCCASIONS } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { routes } from "@/lib/routes";
+import { openGraph } from "@/lib/seo";
 import { facetLabels, strings } from "@/lib/strings";
+
+/**
+ * The title and description are the layout's already — this adds the two things
+ * only the home page can say: its canonical, and a share image.
+ *
+ * The image is the flagship's photograph, the same one the hero shows, so a link
+ * pasted into WhatsApp previews with the arrangement the page opens on. It needs
+ * the catalog, hence `generateMetadata` rather than a static object.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const [flagship] = await catalog.listFeaturedProducts();
+
+  return {
+    alternates: { canonical: routes.home },
+    openGraph: openGraph({
+      title: `${strings.site.name} — ${strings.site.tagline}`,
+      description: strings.site.description,
+      path: routes.home,
+      ...(flagship && {
+        image: { url: flagship.images[0], alt: flagship.name },
+      }),
+    }),
+  };
+}
 
 export default async function HomePage() {
   const [featured, categories] = await Promise.all([

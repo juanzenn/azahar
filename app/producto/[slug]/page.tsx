@@ -8,8 +8,10 @@ import { Container } from "@/components/container";
 import { ProductCard } from "@/components/product-card";
 import { SectionHeading } from "@/components/section-heading";
 import { catalog, relatedProducts } from "@/lib/catalog";
+import { shopConfig } from "@/lib/config";
 import { formatPrice } from "@/lib/format";
 import { routes } from "@/lib/routes";
+import { openGraph, productJsonLd } from "@/lib/seo";
 import { strings } from "@/lib/strings";
 
 type ProductPageProps = {
@@ -36,9 +38,22 @@ export async function generateMetadata({
   // so falling back to the layout's own title keeps the types honest.
   if (!product) return {};
 
+  const title = `${product.name} — ${strings.site.name}`;
+  const description = product.tagline ?? product.description;
+
   return {
-    title: `${product.name} — ${strings.site.name}`,
-    description: product.tagline ?? product.description,
+    title,
+    description,
+    alternates: { canonical: routes.product(product.slug) },
+    // The arrangement's own photograph is the share image. There is no server to
+    // compose one at request time, and a real photo of the thing being sold beats
+    // anything generated: portrait, which the platforms crop, but never wrong.
+    openGraph: openGraph({
+      title,
+      description,
+      path: routes.product(product.slug),
+      image: { url: product.images[0], alt: product.name },
+    }),
   };
 }
 
@@ -71,6 +86,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <>
+      {/* Structured data for the search result: name, photograph, price. Built by
+          `lib/seo`, which decides among other things not to claim availability —
+          the shop has no stock model to claim it from. Rendered as a script tag
+          rather than through `metadata`, which has no field for it. */}
+      <script
+        type="application/ld+json"
+        // The content is the seed's own copy serialised by `JSON.stringify`, not
+        // anything a visitor can reach: there is no input on this page.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd(product, shopConfig.siteUrl)),
+        }}
+      />
+
       <Container className="pt-7 pb-16 md:pb-24">
         <Breadcrumbs items={trail} />
 

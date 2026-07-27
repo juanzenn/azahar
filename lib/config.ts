@@ -25,6 +25,22 @@ const PLACEHOLDER_WHATSAPP = "584121234567";
 
 export const shopConfig = {
   /**
+   * Where the site is published — scheme and host, no trailing slash.
+   *
+   * The one value here that is about the *deploy* rather than the shop, and it
+   * has to be configured rather than derived: a static export has no request to
+   * read a host from, so canonical links, `sitemap.xml` and every Open Graph tag
+   * are built by joining a path onto this at build time. The placeholder uses the
+   * reserved `.example` TLD, so an unconfigured build cannot point a crawler at
+   * somebody's real domain.
+   */
+  siteUrl: env.url(
+    "NEXT_PUBLIC_SITE_URL",
+    process.env.NEXT_PUBLIC_SITE_URL,
+    "https://azahar.example",
+  ),
+
+  /**
    * WhatsApp number in wa.me form: country code + digits only, with no `+`, no
    * leading zero and no separators. Checkout builds its deep-link from this.
    */

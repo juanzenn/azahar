@@ -6,6 +6,7 @@ import { Container } from "@/components/container";
 import { ResultsSurface } from "@/components/results-surface";
 import { catalog } from "@/lib/catalog";
 import { routes } from "@/lib/routes";
+import { openGraph } from "@/lib/seo";
 import { strings } from "@/lib/strings";
 
 type CategoryPageProps = {
@@ -29,9 +30,23 @@ export async function generateMetadata({
   // falling back to the layout's own title keeps the types honest.
   if (!category) return {};
 
+  const title = `${category.name} — ${strings.site.name}`;
+  const description = category.description ?? strings.site.description;
+
   return {
-    title: `${category.name} — ${strings.site.name}`,
-    description: category.description ?? strings.site.description,
+    title,
+    description,
+    alternates: { canonical: routes.category(category.slug) },
+    openGraph: openGraph({
+      title,
+      description,
+      path: routes.category(category.slug),
+      // The category's own hero, which is the landscape image of the set — the
+      // one shape Open Graph actually wants.
+      ...(category.heroImage && {
+        image: { url: category.heroImage, alt: category.name },
+      }),
+    }),
   };
 }
 
