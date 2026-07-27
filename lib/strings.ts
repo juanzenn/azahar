@@ -1,5 +1,8 @@
 import type { Colour, FlowerType, Occasion, Size } from "@/lib/catalog/types";
 import { formatPrice } from "@/lib/format";
+// Type-only, so nothing imports back at runtime: checkout's vocabularies are the
+// order module's, and their labels are this one's.
+import type { CheckoutIssue, TimeWindow } from "@/lib/order";
 // Type-only, so nothing imports back at runtime: the search module reads
 // `facetLabels` from here, and price range is its vocabulary rather than the
 // domain model's because it is derived from the price.
@@ -258,11 +261,122 @@ export const strings = {
 
     subtotal: "Subtotal",
     subtotalNote: "El envío se calcula al finalizar la compra.",
+    /** The way out of the cart and into checkout. */
+    checkout: "Finalizar compra",
     keepShopping: "Seguir comprando",
 
     emptyHeading: "Tu carrito está vacío",
     emptyBody:
       "Todavía no has agregado nada. Explora el catálogo y aquí te esperará lo que elijas.",
+  },
+
+  /**
+   * Checkout. The longest block in the file, and the one where wording does the
+   * most work: every hint below exists because a customer filling this in on a
+   * phone cannot ask anyone what a field means.
+   */
+  checkout: {
+    title: "Finalizar compra",
+    description:
+      "Completa los datos de tu pedido y confírmalo por WhatsApp en un paso.",
+    heading: "Finalizar compra",
+    intro:
+      "Completa estos datos y al final te mostramos cómo pagar y confirmas por WhatsApp.",
+
+    /** Explains the asterisk once, above the first field that carries one. */
+    requiredNote: "Los campos con * son obligatorios.",
+    /** Marks the label; the control itself carries `aria-required`. */
+    requiredMark: "*",
+    optional: "(opcional)",
+
+    buyer: {
+      heading: "Tus datos",
+      name: "Nombre completo",
+      phone: "Teléfono / WhatsApp",
+      phoneHint: "Por aquí te escribimos para coordinar. Ej: 0414-1234567",
+      email: "Correo electrónico",
+      emailHint: "Ej: nombre@correo.com",
+    },
+
+    delivery: {
+      heading: "Entrega",
+      methodLabel: "¿Cómo quieres recibir el pedido?",
+      envio: "Envío a domicilio",
+      /** The fee is config, so the copy names it instead of repeating it. */
+      envioFee: (fee: string) => `Costo fijo de ${fee}, sin importar la zona.`,
+      envioFree: "Sin costo de envío.",
+      retiro: "Retiro en tienda",
+      retiroNote: "Sin costo de envío. Coordinamos la hora contigo.",
+      giftToggle: "Es un regalo — enviar a otra persona",
+      giftNote:
+        "Nos dices quién lo recibe y el mensajero coordina con esa persona.",
+    },
+
+    recipient: {
+      heading: "Destinatario",
+      name: "Nombre de quien recibe",
+      phone: "Teléfono de quien recibe",
+      phoneHintDelivery: "El mensajero lo necesita para coordinar la entrega.",
+      phoneHintPickup: "No hace falta si lo retiras tú, pero ayuda tenerlo.",
+    },
+
+    address: {
+      heading: "Dirección de entrega",
+      address: "Dirección",
+      addressHint: "Calle o avenida, edificio o casa, piso y apartamento.",
+      landmark: "Punto de referencia",
+      landmarkHint: "Algo que ayude a ubicarla: «frente a la panadería».",
+      zone: "Zona o sector",
+      /** Said plainly, because a zone field on a shop's form usually means price. */
+      zoneHint:
+        "Solo para el mensajero: el envío es de costo fijo y esto no cambia el precio.",
+    },
+
+    schedule: {
+      heading: "Programación",
+      date: "Fecha de entrega",
+      dateHint: "De hoy en adelante.",
+      window: "Franja horaria",
+      windowAny: "Sin preferencia",
+      windows: {
+        manana: "Mañana (8:00 am – 12:00 pm)",
+        tarde: "Tarde (12:00 pm – 6:00 pm)",
+        otra: "Otra — la indico abajo",
+      } satisfies Record<TimeWindow, string>,
+      windowNote: "¿A qué hora?",
+      windowNoteHint: "Ej: después de las 4:00 pm.",
+    },
+
+    extras: {
+      heading: "Extras",
+      cardMessage: "Mensaje de la tarjeta",
+      cardMessageHint:
+        "Lo escribimos a mano en la tarjeta que acompaña las flores.",
+      cardMessageCount: (used: number, max: number) =>
+        `${used}/${max} caracteres`,
+      cardFrom: "De parte de",
+      cardFromHint: "Déjalo vacío si quieres que el regalo sea anónimo.",
+      notes: "Notas adicionales",
+      notesHint: "Cualquier cosa que debamos tener en cuenta.",
+    },
+
+    summary: {
+      heading: "Tu pedido",
+      /** "2 × Ramo Primavera" — the compact form the sticky card can afford. */
+      line: (qty: number, name: string) => `${qty} × ${name}`,
+      subtotal: "Subtotal",
+      delivery: "Envío",
+      total: "Total",
+      /** Envío and total both wait on the method: an exact total is the point. */
+      pending: "Por definir",
+      pendingNote: "Elige envío o retiro para ver el total exacto.",
+      editCart: "Editar el carrito",
+    },
+
+    errors: {
+      required: "Completa este campo.",
+      "past-date": "Elige una fecha de hoy en adelante.",
+    } satisfies Record<CheckoutIssue, string>,
   },
 
   about: {

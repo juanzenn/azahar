@@ -67,9 +67,21 @@ export function CartView({ products }: { products: Product[] }) {
           <p className="text-ink-muted mt-3 text-[13px] leading-relaxed">
             {copy.subtotalNote}
           </p>
+
+          {/* The only door into checkout: the header carries a badge rather than
+              a checkout link, so a customer who never opens the cart never
+              reaches the form — which is the right order anyway, since the
+              subtotal above is what they are agreeing to carry forward. */}
+          <Link
+            href={routes.checkout}
+            className="bg-primary text-primary-foreground mt-7 block py-3.5 text-center text-sm tracking-[0.04em]"
+          >
+            {copy.checkout}
+          </Link>
+
           <Link
             href={routes.search}
-            className="mt-7 inline-block text-[13px] underline underline-offset-4"
+            className="mt-5 inline-block text-[13px] underline underline-offset-4"
           >
             {copy.keepShopping}
           </Link>
