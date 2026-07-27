@@ -10,6 +10,7 @@ import {
   TextAreaField,
   TextField,
 } from "@/components/checkout-field";
+import { CopyButton } from "@/components/copy-button";
 import { OrderSummary } from "@/components/order-summary";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -19,6 +20,7 @@ import {
   DELIVERY_METHODS,
   EMPTY_FORM,
   MAX_CARD_MESSAGE_LENGTH,
+  PAYMENT_METHODS,
   TIME_WINDOWS,
   quoteOrder,
   requiredFields,
@@ -31,6 +33,7 @@ import type {
   CheckoutForm,
   DeliveryMethod,
 } from "@/lib/order";
+import type { PaymentRail } from "@/lib/payment";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
@@ -46,21 +49,28 @@ const copy = strings.checkout;
  * that had to be engineered.
  *
  * Nothing here decides what the shop needs or what the order costs — that is
- * `lib/order`'s, and it is decided once for the asterisks, the errors and the
- * total alike. What this island owns is the wiring: which blocks are on screen,
- * which figures the summary is showing, and the two guards that keep a customer
- * out of a form that cannot lead anywhere.
+ * `lib/order`'s, and it is decided once for the asterisks, the errors, the total
+ * and the submit gate alike. Which rails exist and what each of them is paid
+ * through is `lib/payment`'s, arriving as data. What this island owns is the
+ * wiring: which blocks are on screen, which figures the summary is showing, and
+ * the two guards that keep a customer out of a form that cannot lead anywhere.
  *
- * The payment rails and the submit button belong to the next slice; the form
- * below ends where they will begin.
+ * **The submit gate is not a second opinion.** It asks `validate` whether
+ * anything is wrong and nothing else — so the button cannot be enabled while an
+ * asterisk goes unanswered, and cannot be disabled for a reason no field is
+ * showing. Where it *leads* is the next slice: building the message and opening
+ * WhatsApp belongs to dispatch.
  */
 export function CheckoutView({
   products,
   deliveryFeeUsdCents,
+  rails,
 }: {
   products: Product[];
   /** Flat and the shop's to set, so it arrives from config rather than a literal. */
   deliveryFeeUsdCents: number;
+  /** The rails the shop has switched on, already resolved from config. */
+  rails: PaymentRail[];
 }) {
   const router = useRouter();
   const { lines, loaded } = useCart();
@@ -111,12 +121,12 @@ export function CheckoutView({
   // store is read. Saying nothing beats flashing a form that is about to leave.
   if (!loaded || empty) return <div className="min-h-[46vh]" />;
 
-  const section = {
-    form,
-    update,
-    errors: validate(form, today),
-    required: requiredFields(form),
-  };
+  const errors = validate(form, today);
+  const section = { form, update, errors, required: requiredFields(form) };
+
+  // Nothing left unanswered — which is the only question the button asks, and
+  // the same answer every asterisk on the page was drawn from.
+  const submittable = Object.keys(errors).length === 0;
 
   return (
     <div className="mt-9 grid items-start gap-11 lg:grid-cols-[1fr_340px] lg:gap-16">
@@ -131,13 +141,15 @@ export function CheckoutView({
           {form.deliveryMethod === "envio" && <AddressSection {...section} />}
           <ScheduleSection {...section} today={today} />
           <ExtrasSection {...section} />
-          {/* Pago + referencia land here, above the submit button. */}
+          <PaymentSection {...section} rails={rails} />
+          <Submit ready={submittable} />
         </div>
       </form>
 
       {/* Sticky beside the form on a desktop. On a phone it stacks below, which
           is where the exact total is wanted anyway: directly above the payment
-          instructions the next slice adds. */}
+          instructions, so the figure being transferred is on screen while the
+          account details are being read. */}
       <OrderSummary quote={quote} className="lg:sticky lg:top-[98px]" />
     </div>
   );
@@ -444,5 +456,207 @@ function ExtrasSection({ form, update }: SectionProps) {
         onValueChange={(notes) => update({ notes })}
       />
     </Section>
+  );
+}
+
+/**
+ * How the customer is paying, and the proof of it.
+ *
+ * **One rail's details, never five.** A column of five account blocks is a
+ * customer scanning past four sets of numbers looking for theirs, on a phone,
+ * with a banking app open in the other window — so choosing a rail is what
+ * reveals one.
+ *
+ * Which rails exist and which fields each of them needs arrives as data, so
+ * nothing here branches per rail — the single exception is cash, which asks a
+ * different question rather than a differently-worded one, and is named once
+ * below. Whether the answer is compulsory is still the shop's rules' to say.
+ */
+function PaymentSection(props: SectionProps & { rails: PaymentRail[] }) {
+  const { form, update, required, rails } = props;
+  const labelId = useId();
+
+  // A group rather than a field, like the delivery method, so its mark and its
+  // `aria-required` are drawn from one boolean here.
+  const methodRequired = required.has("paymentMethod");
+  const chosen = rails.find((rail) => rail.method === form.paymentMethod);
+
+  return (
+    <Section heading={copy.payment.heading}>
+      <p className="text-ink-muted -mt-1 text-[12px] leading-relaxed">
+        {copy.payment.intro}
+      </p>
+
+      <div>
+        <p id={labelId} className="text-[13px]">
+          {copy.payment.methodLabel}
+          {methodRequired && <RequiredMark />}
+        </p>
+
+        <RadioGroup
+          aria-labelledby={labelId}
+          aria-required={methodRequired || undefined}
+          value={form.paymentMethod}
+          onValueChange={(value: string) => {
+            const method = PAYMENT_METHODS.find(
+              (candidate) => candidate === value,
+            );
+            if (method) update({ paymentMethod: method });
+          }}
+          className="mt-3 gap-2"
+        >
+          {rails.map((rail) => (
+            <label
+              key={rail.method}
+              className={cn(
+                "border-hairline-strong flex cursor-pointer items-center gap-3 border px-4 py-3 text-[14px]",
+                form.paymentMethod === rail.method && "border-ink bg-panel",
+              )}
+            >
+              <RadioGroupItem value={rail.method} />
+              {rail.label}
+            </label>
+          ))}
+        </RadioGroup>
+      </div>
+
+      {chosen && (
+        <>
+          <AccountBlock rail={chosen} />
+
+          {/* The two halves of one question — what proof is there of payment —
+              and the only place this island names a rail. Every other rail is
+              paid before the order is sent and leaves a reference behind; cash
+              is handed over on arrival and leaves the shop a different problem,
+              which is having the right notes on them. */}
+          {chosen.method === "efectivo" ? (
+            <CashQuestions {...props} />
+          ) : (
+            <ReferenceBlock {...props} />
+          )}
+        </>
+      )}
+    </Section>
+  );
+}
+
+/** The proof of a payment already made, and what to do with the receipt. */
+function ReferenceBlock(props: SectionProps) {
+  const { form, update } = props;
+  const field = marksFor(props);
+
+  return (
+    <div className="grid gap-4">
+      <TextField
+        {...field("reference")}
+        label={copy.payment.reference}
+        hint={copy.payment.referenceHint}
+        value={form.reference}
+        onValueChange={(reference) => update({ reference })}
+      />
+
+      {/* A deep-link cannot attach an image, so the customer is told whose job
+          the screenshot is before they leave for WhatsApp. */}
+      <p className="border-hairline bg-panel text-ink-muted border p-4 text-[12px] leading-relaxed">
+        {copy.payment.receiptNote}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * What cash needs instead: whether the shop has to bring change, and for what
+ * note. Optional — most customers have the amount — so it is a toggle rather
+ * than a field nobody has an answer to.
+ */
+function CashQuestions(props: SectionProps) {
+  const { form, update } = props;
+  const field = marksFor(props);
+
+  return (
+    <div className="grid gap-4">
+      <label className="flex cursor-pointer items-center gap-3 text-[14px]">
+        <Checkbox
+          checked={form.needsChange}
+          onCheckedChange={(needsChange: boolean) => update({ needsChange })}
+        />
+        {copy.payment.changeToggle}
+      </label>
+
+      {form.needsChange && (
+        <TextField
+          {...field("changeAmount")}
+          label={copy.payment.changeAmount}
+          hint={copy.payment.changeAmountHint}
+          inputMode="decimal"
+          value={form.changeAmount}
+          onValueChange={(changeAmount) => update({ changeAmount })}
+        />
+      )}
+    </div>
+  );
+}
+
+/** The chosen rail's account details, each copyable. Empty for efectivo. */
+function AccountBlock({ rail }: { rail: PaymentRail }) {
+  return (
+    <div className="border-hairline bg-panel border p-5">
+      <p className="text-ink-muted text-[12px] leading-relaxed">
+        {rail.instruction}
+      </p>
+
+      {rail.details.length > 0 && (
+        <dl className="mt-4 grid gap-3">
+          {rail.details.map((detail) => (
+            <div
+              key={detail.label}
+              className="border-hairline flex items-center justify-between gap-4 border-t pt-3 first:border-t-0 first:pt-0"
+            >
+              <div className="min-w-0">
+                <dt className="text-ink-muted text-[11px] tracking-[0.14em] uppercase">
+                  {detail.label}
+                </dt>
+                <dd className="mt-1 text-[15px] break-all tabular-nums">
+                  {detail.value}
+                </dd>
+              </div>
+              <CopyButton label={detail.label} value={detail.value} />
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The last control on the page, and the only one that is ever unavailable.
+ *
+ * Disabled rather than allowed-then-refused: the customer is about to leave for
+ * WhatsApp, and a button that opens a chat with half an order in it is worse
+ * than one that waits. The line underneath is why it is off — a dead button with
+ * no explanation is the same dead end the asterisks exist to prevent.
+ */
+function Submit({ ready }: { ready: boolean }) {
+  return (
+    <div className="border-hairline border-t pt-8">
+      {/* Dispatch — the message, the order code and the deep-link — is the next
+          slice. The gate is here because it is what the payment state decides. */}
+      <button
+        type="submit"
+        disabled={!ready}
+        className="bg-primary text-primary-foreground w-full cursor-pointer px-9 py-4 text-sm tracking-[0.04em] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {copy.payment.submit}
+      </button>
+
+      {/* Only when it is off. What pressing it does is dispatch's to promise,
+          and there is nothing to say about a button that is ready to press. */}
+      {!ready && (
+        <p className="text-ink-muted mt-3 text-center text-[12px] leading-relaxed">
+          {copy.payment.submitBlocked}
+        </p>
+      )}
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -6,20 +6,24 @@ import { CART_STORAGE_KEY } from "@/lib/cart";
 import type { Cart } from "@/lib/cart";
 import type { Product } from "@/lib/catalog/types";
 import { toIsoDate } from "@/lib/order";
+import type { PaymentRail } from "@/lib/payment";
 
 /**
  * Wiring only.
  *
- * Which fields the shop needs and what the order comes to are `lib/order`'s to
- * prove, and both are proven without a DOM — not one case from `order.test.ts`
- * is restated here. What is left is what no pure test can see: whether those
- * rules are actually *plugged in*. A block that stays on screen after the gift
- * toggle is unticked, an asterisk that never moves when the customer switches to
- * pickup, a summary quoting a subtotal as a total, a date picker with no floor —
- * every one of them passes a green `lib/order`.
+ * Which fields the shop needs, what the order comes to and which rows a rail
+ * shows are `lib/order`'s and `lib/payment`'s to prove, and all of it is proven
+ * without a DOM — not one case from those tests is restated here. What is left
+ * is what no pure test can see: whether those rules are actually *plugged in*. A
+ * block that stays on screen after the gift toggle is unticked, an asterisk that
+ * never moves when the customer switches to pickup, a summary quoting a subtotal
+ * as a total, a date picker with no floor, five sets of bank details on screen
+ * at once, a send button that lights up on an unpaid order — every one of them
+ * passes a green `lib/order`.
  *
  * So each assertion below is about connection: a toggle changes what is asked
- * for, a method changes what is owed, and an empty cart never gets a form.
+ * for, a method changes what is owed, a rail changes what is on screen, and an
+ * empty cart never gets a form.
  */
 
 const router = vi.hoisted(() => ({ replace: vi.fn(), push: vi.fn() }));
@@ -46,6 +50,34 @@ const CATALOG = [product("ramo", "Ramo Primavera", 2500)];
 const FEE = 500;
 
 /**
+ * Rails as the page receives them — hand-built rather than run through
+ * `availableRails`, so a change to which fields a real Pago Móvil needs cannot
+ * reach into a test about revealing one block at a time. The values are
+ * deliberately unmistakable: finding one on screen says exactly which rail is
+ * showing.
+ */
+const RAILS: PaymentRail[] = [
+  {
+    method: "pago-movil",
+    label: "Pago Móvil",
+    instruction: "Haz el pago móvil con estos datos.",
+    details: [{ label: "Teléfono", value: "0412-0000001" }],
+  },
+  {
+    method: "zelle",
+    label: "Zelle",
+    instruction: "Envía el Zelle a estos datos.",
+    details: [{ label: "Titular", value: "Azahar Flowers LLC" }],
+  },
+  {
+    method: "efectivo",
+    label: "Efectivo",
+    instruction: "Pagas al recibir el pedido.",
+    details: [],
+  },
+];
+
+/**
  * A cart is a precondition of this page existing at all, so the store is seeded
  * before mounting — read once per page load, which is what a fresh module
  * registry means here.
@@ -62,22 +94,45 @@ async function visit(cart: Cart = [{ slug: "ramo", qty: 2 }]) {
   const user = userEvent.setup();
   render(
     <CartProvider knownSlugs={CATALOG.map((item) => item.slug)}>
-      <CheckoutView products={CATALOG} deliveryFeeUsdCents={FEE} />
+      <CheckoutView
+        products={CATALOG}
+        deliveryFeeUsdCents={FEE}
+        rails={RAILS}
+      />
     </CartProvider>,
   );
 
   // Queried on use, not here: a page that redirects an empty cart renders none
   // of these, which is one of the things under test.
-  const method = (name: RegExp) => screen.getByRole("radio", { name });
+  const radio = (name: RegExp) => screen.getByRole("radio", { name });
 
   return {
     user,
-    chooseDelivery: () => user.click(method(/^Envío a domicilio/)),
-    choosePickup: () => user.click(method(/^Retiro en tienda/)),
-    /** The gift toggle is the only checkbox on the page. */
-    toggleGift: () => user.click(screen.getByRole("checkbox")),
+    chooseDelivery: () => user.click(radio(/^Envío a domicilio/)),
+    choosePickup: () => user.click(radio(/^Retiro en tienda/)),
+    chooseRail: (name: RegExp) => user.click(radio(name)),
+    /** The gift toggle is the only checkbox on the page until cash is chosen. */
+    toggleGift: () => user.click(screen.getAllByRole("checkbox")[0]),
+    /**
+     * Everything the shop asks for whatever the customer chooses, short of
+     * paying: a pickup needs no address, and no rail has been picked yet.
+     */
+    fillDetails: async () => {
+      await user.type(screen.getByLabelText(/^Nombre completo/), "Juan");
+      await user.type(screen.getByLabelText(/^Teléfono \/ WhatsApp/), "0414");
+      await user.type(screen.getByLabelText(/^Correo/), "juan@example.com");
+      await user.click(radio(/^Retiro en tienda/));
+      // A date input is not typed into character by character the way a text
+      // field is; the picker hands the value over whole.
+      fireEvent.change(screen.getByLabelText(/^Fecha de entrega/), {
+        target: { value: toIsoDate(new Date()) },
+      });
+    },
   };
 }
+
+const submitButton = () =>
+  screen.getByRole("button", { name: "Enviar pedido por WhatsApp" });
 
 /**
  * The whole summary card as one string. Deliberately not row-by-row: what the
@@ -190,6 +245,62 @@ describe("the checkout island", () => {
 
     expect(buyer).toHaveValue("Juan Álvarez");
     expect(from).toHaveValue("Juan y Ana");
+  });
+
+  /**
+   * Five rails' worth of account numbers on one screen is a customer scanning
+   * for theirs with a banking app open in the other window. Choosing one is what
+   * reveals one — and, just as importantly, what hides the last.
+   */
+  it("shows the account details of the chosen rail and no other", async () => {
+    const { chooseRail } = await visit();
+
+    expect(screen.queryByText("0412-0000001")).toBeNull();
+    expect(screen.queryByText("Azahar Flowers LLC")).toBeNull();
+
+    await chooseRail(/^Pago Móvil/);
+    expect(screen.getByText("0412-0000001")).toBeInTheDocument();
+    expect(screen.queryByText("Azahar Flowers LLC")).toBeNull();
+
+    await chooseRail(/^Zelle/);
+    expect(screen.getByText("Azahar Flowers LLC")).toBeInTheDocument();
+    expect(screen.queryByText("0412-0000001")).toBeNull();
+  });
+
+  // Cash is paid at the door, so there is no reference to type — asking for one
+  // would leave the button locked on the only rail that needs no bank at all.
+  it("asks for a reference on a transfer and for change on cash", async () => {
+    const { chooseRail } = await visit();
+
+    await chooseRail(/^Pago Móvil/);
+    expect(screen.getByLabelText(/^Número de referencia/)).toBeInTheDocument();
+    expect(screen.queryByText("¿Necesitas vuelto?")).toBeNull();
+
+    await chooseRail(/^Efectivo/);
+    expect(screen.queryByLabelText(/^Número de referencia/)).toBeNull();
+    expect(screen.getByText("¿Necesitas vuelto?")).toBeInTheDocument();
+  });
+
+  /**
+   * The gate, in the order a customer meets it. What counts as valid is
+   * `lib/order`'s and is not restated — what is under test is that the button
+   * asks it at all, and asks it again after every keystroke rather than once on
+   * submit.
+   */
+  it("keeps the send button shut until the order is complete and paid", async () => {
+    const { user, chooseRail, fillDetails } = await visit();
+
+    expect(submitButton()).toBeDisabled();
+
+    await fillDetails();
+    // Everything but the payment: the rail itself is still missing.
+    expect(submitButton()).toBeDisabled();
+
+    await chooseRail(/^Pago Móvil/);
+    expect(submitButton()).toBeDisabled();
+
+    await user.type(screen.getByLabelText(/^Número de referencia/), "00123456");
+    expect(submitButton()).toBeEnabled();
   });
 
   it("sends a customer with an empty cart back to the cart", async () => {

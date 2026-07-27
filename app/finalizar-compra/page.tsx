@@ -4,6 +4,7 @@ import { CheckoutView } from "@/components/checkout-view";
 import { Container } from "@/components/container";
 import { catalog } from "@/lib/catalog";
 import { shopConfig } from "@/lib/config";
+import { availableRails } from "@/lib/payment";
 import { strings } from "@/lib/strings";
 
 export const metadata: Metadata = {
@@ -15,11 +16,12 @@ export const metadata: Metadata = {
  * Checkout. No breadcrumbs, like the cart: it is a step in the order rather than
  * a place in the catalog.
  *
- * The two things the island cannot work out for itself are read here, at build
+ * The three things the island cannot work out for itself are read here, at build
  * time, and handed down: the catalog every line resolves its name and price
- * against, and the shop's flat delivery fee. Neither is fetched by the island —
- * the fee in particular arrives as a prop so the number lives in config and
- * nowhere else.
+ * against, the shop's flat delivery fee, and the payment rails it has switched
+ * on. None is fetched by the island — the fee and the rails in particular arrive
+ * as props so the shop's own numbers live in config and nowhere else, and a
+ * switched-off rail is absent from the page rather than hidden by it.
  */
 export default async function CheckoutPage() {
   const products = await catalog.listProducts();
@@ -36,6 +38,7 @@ export default async function CheckoutPage() {
       <CheckoutView
         products={products}
         deliveryFeeUsdCents={shopConfig.deliveryFeeUsdCents}
+        rails={availableRails(shopConfig.paymentRails)}
       />
     </Container>
   );

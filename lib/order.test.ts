@@ -16,10 +16,11 @@ import type { CheckoutForm } from "@/lib/order";
  *
  * Two things are proven here, and both are the kind that go quietly wrong. The
  * first is the **conditional-required web**: which fields the shop actually
- * needs depends on two toggles, and every combination of them asks for a
- * different set. The second is the **money**, whose only rule — pickup costs
- * nothing to deliver — is one `if` that a call site could get backwards without
- * anything else noticing.
+ * needs depends on three answers — delivery-or-pickup, is-it-a-gift and how the
+ * customer paid — and every combination of them asks for a different set. The
+ * second is the **money**, whose only rule — pickup costs nothing to deliver —
+ * is one `if` that a call site could get backwards without anything else
+ * noticing.
  *
  * No DOM. Which fields are required is not a React question, and the island's
  * own test does not restate a single case from here.
@@ -40,6 +41,16 @@ const BUYER = {
   date: TODAY,
 } satisfies Partial<CheckoutForm>;
 
+/**
+ * A rail chosen and the transfer made. Every complete form now carries one: the
+ * customer pays before the order is dispatched, so a form with no payment on it
+ * is not a submittable order.
+ */
+const PAID = {
+  paymentMethod: "pago-movil",
+  reference: "00123456",
+} satisfies Partial<CheckoutForm>;
+
 describe("requiredFields", () => {
   const ALWAYS = [
     "buyerName",
@@ -47,9 +58,10 @@ describe("requiredFields", () => {
     "buyerEmail",
     "deliveryMethod",
     "date",
+    "paymentMethod",
   ] as const;
 
-  it("asks for the buyer, a method and a date before anything is chosen", () => {
+  it("asks for the buyer, a method, a date and a rail before anything is chosen", () => {
     expect(requiredFields(EMPTY_FORM)).toEqual(new Set(ALWAYS));
   });
 
@@ -87,6 +99,66 @@ describe("requiredFields", () => {
     expect(required.has("recipientName")).toBe(false);
     expect(required.has("recipientPhone")).toBe(false);
   });
+
+  /**
+   * The rails split in two, and the split is the whole rule: four of them are
+   * paid before the order is sent and leave a reference behind, and efectivo is
+   * paid to the courier at the door and cannot possibly have one. Asking for a
+   * reference the customer has no way to produce would lock the submit button
+   * on the only rail that needs no bank at all.
+   */
+  describe("the payment rails", () => {
+    it("asks for a reference once a transfer has been made", () => {
+      for (const method of [
+        "pago-movil",
+        "transferencia",
+        "zelle",
+        "binance",
+      ] as const) {
+        expect(
+          requiredFields(form({ paymentMethod: method })).has("reference"),
+        ).toBe(true);
+      }
+    });
+
+    it("asks for no reference when the customer pays the courier in cash", () => {
+      const required = requiredFields(form({ paymentMethod: "efectivo" }));
+
+      expect(required.has("reference")).toBe(false);
+    });
+
+    // Nothing has been paid yet, so there is nothing to reference — the missing
+    // answer is the rail itself, and saying so twice would be one complaint too
+    // many.
+    it("asks for no reference before a rail is chosen", () => {
+      expect(requiredFields(EMPTY_FORM).has("reference")).toBe(false);
+    });
+
+    it("asks how much the customer is paying with once they ask for change", () => {
+      const required = requiredFields(
+        form({ paymentMethod: "efectivo", needsChange: true }),
+      );
+
+      expect(required.has("changeAmount")).toBe(true);
+    });
+
+    it("asks for no amount when the customer needs no change", () => {
+      const required = requiredFields(form({ paymentMethod: "efectivo" }));
+
+      expect(required.has("changeAmount")).toBe(false);
+    });
+
+    // The toggle belongs to efectivo alone, and a stale `true` left behind by a
+    // customer who changed their mind must not ask a bank transfer how much
+    // cash it is bringing.
+    it("asks a transfer for no change amount however the toggle was left", () => {
+      const required = requiredFields(
+        form({ paymentMethod: "zelle", needsChange: true }),
+      );
+
+      expect(required.has("changeAmount")).toBe(false);
+    });
+  });
 });
 
 describe("validate", () => {
@@ -97,6 +169,7 @@ describe("validate", () => {
       buyerEmail: "required",
       deliveryMethod: "required",
       date: "required",
+      paymentMethod: "required",
     });
   });
 
@@ -105,6 +178,7 @@ describe("validate", () => {
       validate(
         form({
           ...BUYER,
+          ...PAID,
           deliveryMethod: "envio",
           address: "Av. Principal, Edif. Sol, Apto 4B",
           isGift: true,
@@ -120,7 +194,7 @@ describe("validate", () => {
   // problem, which is a different claim and the one the submit gate reads.
   it("passes a pickup with no address at all", () => {
     expect(
-      validate(form({ ...BUYER, deliveryMethod: "retiro" }), TODAY),
+      validate(form({ ...BUYER, ...PAID, deliveryMethod: "retiro" }), TODAY),
     ).toEqual({});
   });
 
@@ -129,18 +203,29 @@ describe("validate", () => {
       validate(
         form({
           ...BUYER,
+          ...PAID,
           buyerName: "   ",
           deliveryMethod: "envio",
           address: "\n\t ",
+          reference: "  ",
         }),
         TODAY,
       ),
-    ).toEqual({ buyerName: "required", address: "required" });
+    ).toEqual({
+      buyerName: "required",
+      address: "required",
+      reference: "required",
+    });
   });
 
   it("leaves the optional fields alone however empty they are", () => {
     const errors = validate(
-      form({ ...BUYER, deliveryMethod: "envio", address: "Av. Principal" }),
+      form({
+        ...BUYER,
+        ...PAID,
+        deliveryMethod: "envio",
+        address: "Av. Principal",
+      }),
       TODAY,
     );
 
@@ -149,11 +234,86 @@ describe("validate", () => {
     // in EMPTY_FORM, and none of them is the shop's business.
   });
 
+  /**
+   * The submit gate reads nothing but "is this empty", so these cases are the
+   * gate: a form that validates clean is a form the customer can send, and the
+   * only difference between the two halves of the payment rules is whether a
+   * reference stands between them and that button.
+   */
+  describe("the payment", () => {
+    const READY = {
+      ...BUYER,
+      deliveryMethod: "retiro",
+    } satisfies Partial<CheckoutForm>;
+
+    it("holds back a transfer with no reference", () => {
+      expect(
+        validate(form({ ...READY, paymentMethod: "transferencia" }), TODAY),
+      ).toEqual({ reference: "required" });
+    });
+
+    it("passes a transfer once the reference is typed in", () => {
+      expect(
+        validate(
+          form({
+            ...READY,
+            paymentMethod: "transferencia",
+            reference: "00987654",
+          }),
+          TODAY,
+        ),
+      ).toEqual({});
+    });
+
+    // Pago contra entrega: the money changes hands at the door, so there is no
+    // reference to type and nothing standing between this customer and their
+    // order.
+    it("passes efectivo with no reference at all", () => {
+      expect(
+        validate(form({ ...READY, paymentMethod: "efectivo" }), TODAY),
+      ).toEqual({});
+    });
+
+    it("holds back a cash order that needs change until the shop knows the note", () => {
+      expect(
+        validate(
+          form({ ...READY, paymentMethod: "efectivo", needsChange: true }),
+          TODAY,
+        ),
+      ).toEqual({ changeAmount: "required" });
+    });
+
+    it("passes a cash order once the shop knows what to bring change for", () => {
+      expect(
+        validate(
+          form({
+            ...READY,
+            paymentMethod: "efectivo",
+            needsChange: true,
+            changeAmount: "50",
+          }),
+          TODAY,
+        ),
+      ).toEqual({});
+    });
+
+    it("holds back a form with no rail chosen", () => {
+      expect(validate(form(READY), TODAY)).toEqual({
+        paymentMethod: "required",
+      });
+    });
+  });
+
   describe("the date", () => {
     it("refuses a date already past", () => {
       expect(
         validate(
-          form({ ...BUYER, date: "2026-07-26", deliveryMethod: "retiro" }),
+          form({
+            ...BUYER,
+            ...PAID,
+            date: "2026-07-26",
+            deliveryMethod: "retiro",
+          }),
           TODAY,
         ),
       ).toEqual({ date: "past-date" });
@@ -162,7 +322,7 @@ describe("validate", () => {
     it("accepts today, which is a same-day order rather than an impossible one", () => {
       expect(
         validate(
-          form({ ...BUYER, date: TODAY, deliveryMethod: "retiro" }),
+          form({ ...BUYER, ...PAID, date: TODAY, deliveryMethod: "retiro" }),
           TODAY,
         ).date,
       ).toBeUndefined();
@@ -171,7 +331,12 @@ describe("validate", () => {
     it("accepts a date in the future", () => {
       expect(
         validate(
-          form({ ...BUYER, date: "2026-12-24", deliveryMethod: "retiro" }),
+          form({
+            ...BUYER,
+            ...PAID,
+            date: "2026-12-24",
+            deliveryMethod: "retiro",
+          }),
           TODAY,
         ).date,
       ).toBeUndefined();
@@ -181,8 +346,10 @@ describe("validate", () => {
     // pick one, not that the one they picked is in the past.
     it("calls a blank date missing rather than past", () => {
       expect(
-        validate(form({ ...BUYER, date: "", deliveryMethod: "retiro" }), TODAY)
-          .date,
+        validate(
+          form({ ...BUYER, ...PAID, date: "", deliveryMethod: "retiro" }),
+          TODAY,
+        ).date,
       ).toBe("required");
     });
   });

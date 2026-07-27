@@ -133,11 +133,12 @@ validate(form, today)                    → CheckoutErrors
 quoteOrder(cart, products, form, config) → OrderQuote
 ```
 
-The **conditional-required web** is a function of the form rather than a validation pass: two toggles
-(delivery-vs-pickup, is-it-a-gift) decide between them which fields the shop needs, so the asterisks,
-the `aria-required` attributes and the errors all read one answer and cannot drift. Gift ⇒ recipient
-name; gift + delivery ⇒ recipient phone (the courier is the reason it is asked for, and a pickup has
-no courier); delivery ⇒ address. Validation is deliberately **soft on format** — phone and email are
+The **conditional-required web** is a function of the form rather than a validation pass: three
+answers (delivery-vs-pickup, is-it-a-gift, which payment rail) decide between them which fields the
+shop needs, so the asterisks, the `aria-required` attributes and the errors all read one answer and
+cannot drift. Gift ⇒ recipient name; gift + delivery ⇒ recipient phone (the courier is the reason it
+is asked for, and a pickup has no courier); delivery ⇒ address; any rail but efectivo ⇒ reference.
+Validation is deliberately **soft on format** — phone and email are
 checked for being _there_ and nothing else, because a regex that rejects a reachable customer costs
 the shop an order.
 
@@ -150,7 +151,17 @@ pickup always zeroes. `deliveryCents` and `totalCents` are **`null` until a meth
 summary card shows "por definir" rather than standing in as zero — the point of a flat fee is that the
 number the customer is about to transfer by hand is exact before they transfer it.
 
-`buildOrder` and `orderToWhatsAppUrl` join this module with the payment rails and dispatch.
+**Payment rails.** The five rails (Pago Móvil, transferencia, Zelle, Binance/USDT, efectivo) are
+config, not components: `shopConfig.paymentRails` holds an enable flag and the account values,
+`lib/payment.ts` is the view model that turns them into `{ label, value }` rows — one switch that
+knows a Pago Móvil takes a bank code and no account number, and that a blank value means the shop
+doesn't have one. `enabled: false` removes a rail from checkout _and_ from the footer's list, which
+reads the same function. `efectivo` is the rail that behaves differently everywhere: pago contra
+entrega, so `requiredFields` asks it for no `reference` and asks instead — when the customer says
+they need change — what note they are paying with. The submit gate is nothing but
+`validate(form, today)` being empty, so the button can't disagree with the asterisks.
+
+`buildOrder` and `orderToWhatsAppUrl` join this module with dispatch.
 
 ### Domain model
 
@@ -208,8 +219,11 @@ Islands get **deliberately thin wiring tests** that must not re-test that logic.
   resets to page 1, mounting from a URL with params reproduces that state.
 - **checkout island** — the conditional blocks appear and disappear with the toggles, the recipient
   phone's marking moves with the method, the summary is fed by the catalog and moves with the method,
-  an empty cart redirects. It names **no amounts**: what the figures come to is `lib/order`'s, proven
-  without a DOM, and restating it here would be the exact duplication this split exists to avoid.
+  choosing a rail reveals that rail's account block and hides the last, the submit button opens only
+  once the order is complete and paid, an empty cart redirects. It names **no amounts** and no rail's
+  real fields: what the figures come to is `lib/order`'s and which rows a rail has is `lib/payment`'s,
+  both proven without a DOM, and restating either here would be the exact duplication this split
+  exists to avoid.
 
 Explicitly **not** tested: the catalog seam's static implementation (it returns array literals; the
 compiler is the guarantee), visual appearance, and Server Component page rendering (the build
@@ -228,14 +242,15 @@ exercises it).
 **One ticket, one commit**, message `feat(NN): <summary>`. Progress is tracked by commit history and
 by the ticket checkboxes.
 
-Tickets 01–11 are complete: scaffold, catalog seam, imagery, about/404, home, product detail, search
-module, results island + `/buscar`, categories index + category pages, cart, and checkout details.
+Tickets 01–12 are complete: scaffold, catalog seam, imagery, about/404, home, product detail, search
+module, results island + `/buscar`, categories index + category pages, cart, checkout details, and
+the payment rails + submit gate.
 
-Next is **12 — payment rails and the submit gate**: the five config-driven rails (Pago Móvil,
-transferencia, Zelle, Binance/USDT, efectivo), single-select radio revealing only the chosen rail's
-account block with copy buttons, a required `referencia` for everything except efectivo — which is
-pago contra entrega and gets a "¿necesitas vuelto?" toggle instead — and the submit button disabled
-until the form validates and a reference is present. Two things are already shaped for it:
-`lib/order`'s `CheckoutErrors` takes the new rule without changing its callers, and the checkout
-island's form ends at a marked slot where the payment section belongs. Then **13** (dispatch,
-`/pedido-enviado`, order code, cart cleared on arrival) and **14** (real photography).
+Next is **13 — dispatch and confirmation**: `buildOrder` and `orderToWhatsAppUrl` in `lib/order`
+(the locked message template, sections present only when relevant, `*bold*` markers, encoded exactly
+once, `%0A` newlines, under ~2000 chars), an `AZ-XXXX` order code from an **injectable** randomness
+source, the order stashed in `sessionStorage`, and `/pedido-enviado` carrying the summary, the code,
+the WhatsApp button, the raw-number copy fallback and the comprobante reminder — clearing the cart on
+arrival. One thing is already shaped for it: the checkout form's submit button is gated and waiting
+for a handler, and `components/copy-button.tsx` is the fallback's copy control. Then **14** (real
+photography).

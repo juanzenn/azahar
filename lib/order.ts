@@ -13,13 +13,15 @@ import type { Product } from "@/lib/catalog/types";
  * message from a finished form joins this module later; the form and its rules
  * come first because the page cannot be drawn without them.
  *
- * **The interesting part is the conditional-required web.** Two toggles —
- * delivery-or-pickup and is-it-a-gift — decide between them which fields the
- * shop actually needs, and the page has to know that *before* the customer
- * submits, because required fields are marked as required from the first paint.
- * So the web is a function of the form, `requiredFields`, and validation is the
- * mechanical part layered on top: of the fields this form requires, which are
- * still blank. One rule, one place, and no field asked for twice.
+ * **The interesting part is the conditional-required web.** Three answers —
+ * delivery-or-pickup, is-it-a-gift and which payment rail — decide between them
+ * which fields the shop actually needs, and the page has to know that *before*
+ * the customer submits, because required fields are marked as required from the
+ * first paint. So the web is a function of the form, `requiredFields`, and
+ * validation is the mechanical part layered on top: of the fields this form
+ * requires, which are still blank. One rule, one place, and no field asked for
+ * twice — and the submit gate is then nothing but "are there no errors", rather
+ * than a second opinion that could disagree with the asterisks.
  *
  * No React, no DOM, and no reach for a clock or a config module: `today` and the
  * delivery fee arrive as arguments, which is what makes the past-date rule and
@@ -43,6 +45,27 @@ export const TIME_WINDOWS = ["manana", "tarde", "otra"] as const;
 export type TimeWindow = (typeof TIME_WINDOWS)[number];
 
 /**
+ * The rails the shop can be paid through, in the order they are offered.
+ *
+ * Which of them a given shop actually accepts, and the account numbers behind
+ * each, are configuration — this is only the vocabulary, so that a rail with no
+ * copy, no config and no place in the message is a compile error rather than a
+ * radio button that leads nowhere.
+ *
+ * `efectivo` is the one that behaves differently everywhere it appears: it is
+ * *pago contra entrega*, paid to the courier at the door, so it produces no
+ * reference and asks its own question instead.
+ */
+export const PAYMENT_METHODS = [
+  "pago-movil",
+  "transferencia",
+  "zelle",
+  "binance",
+  "efectivo",
+] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+/**
  * A card, not a letter. The cap keeps the message inside the deep-link's ~2000
  * characters, which the dispatch step depends on and cannot recover from.
  */
@@ -53,8 +76,7 @@ export const MAX_CARD_MESSAGE_LENGTH = 200;
  *
  * Flat and all-strings on purpose: it is the shape a form has, so no section
  * needs assembling before it can be validated, and an unchosen radio is `""`
- * rather than a nested block that might be missing. Payment fields join it when
- * the rails are built.
+ * rather than a nested block that might be missing.
  */
 export type CheckoutForm = {
   // Comprador — always required.
@@ -87,6 +109,15 @@ export type CheckoutForm = {
   cardMessage: string;
   cardFrom: string;
   notes: string;
+
+  // Pago. The customer pays out-of-band and comes back with a reference; the
+  // two cash fields are efectivo's alone, and are ignored — not cleared —
+  // whenever another rail is chosen, so changing your mind twice loses nothing.
+  paymentMethod: PaymentMethod | "";
+  reference: string;
+  needsChange: boolean;
+  /** What the customer is paying with, so the courier brings the difference. */
+  changeAmount: string;
 };
 
 /** What the page starts from, and what a test varies one field of. */
@@ -107,6 +138,10 @@ export const EMPTY_FORM: CheckoutForm = {
   cardMessage: "",
   cardFrom: "",
   notes: "",
+  paymentMethod: "",
+  reference: "",
+  needsChange: false,
+  changeAmount: "",
 };
 
 /**
@@ -122,7 +157,10 @@ export type CheckoutField =
   | "recipientName"
   | "recipientPhone"
   | "address"
-  | "date";
+  | "date"
+  | "paymentMethod"
+  | "reference"
+  | "changeAmount";
 
 /** Asked for whatever the customer chooses. */
 const ALWAYS_REQUIRED: readonly CheckoutField[] = [
@@ -131,6 +169,7 @@ const ALWAYS_REQUIRED: readonly CheckoutField[] = [
   "buyerEmail",
   "deliveryMethod",
   "date",
+  "paymentMethod",
 ];
 
 /**
@@ -152,6 +191,14 @@ export function requiredFields(form: CheckoutForm): ReadonlySet<CheckoutField> {
     // The phone exists so the courier can coordinate with whoever is receiving
     // the flowers. On a pickup there is no courier.
     if (delivered) required.add("recipientPhone");
+  }
+
+  if (form.paymentMethod === "efectivo") {
+    // Cash is paid at the door, so there is no reference — and the note the
+    // customer is holding is only the shop's business if they want change back.
+    if (form.needsChange) required.add("changeAmount");
+  } else if (form.paymentMethod !== "") {
+    required.add("reference");
   }
 
   return required;

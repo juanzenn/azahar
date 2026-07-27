@@ -2,7 +2,7 @@ import type { Colour, FlowerType, Occasion, Size } from "@/lib/catalog/types";
 import { formatPrice } from "@/lib/format";
 // Type-only, so nothing imports back at runtime: checkout's vocabularies are the
 // order module's, and their labels are this one's.
-import type { CheckoutIssue, TimeWindow } from "@/lib/order";
+import type { CheckoutIssue, PaymentMethod, TimeWindow } from "@/lib/order";
 // Type-only, so nothing imports back at runtime: the search module reads
 // `facetLabels` from here, and price range is its vocabulary rather than the
 // domain model's because it is derived from the price.
@@ -113,14 +113,9 @@ export const strings = {
     hoursLabel: "Horario",
     locationLabel: "Ubicación",
     exploreHeading: "Explora",
+    /** The list itself is the shop's rails, so a switched-off one cannot be
+        advertised here after checkout has stopped offering it. */
     paymentsHeading: "Métodos de pago",
-    paymentMethods: [
-      "Pago Móvil",
-      "Transferencia",
-      "Zelle",
-      "Binance",
-      "Efectivo",
-    ],
     home: "Inicio",
     categories: "Categorías",
     search: "Ver todo",
@@ -142,6 +137,17 @@ export const strings = {
     categoriesHeading: "Comprar por categoría",
     occasionEyebrow: "Para cada momento",
     occasionHeading: "Comprar por ocasión",
+  },
+
+  /**
+   * The copy-to-clipboard control, wherever it appears — beside a twenty-digit
+   * account number today, beside the shop's own number on the confirmation page
+   * next. Named after what it copies, so a row of them is not five buttons all
+   * called "copiar".
+   */
+  copyButton: {
+    action: (label: string) => `Copiar ${label}`,
+    copied: "Copiado",
   },
 
   breadcrumbs: {
@@ -358,6 +364,76 @@ export const strings = {
       cardFromHint: "Déjalo vacío si quieres que el regalo sea anónimo.",
       notes: "Notas adicionales",
       notesHint: "Cualquier cosa que debamos tener en cuenta.",
+    },
+
+    /**
+     * Pago. The account values themselves are configuration — what lives here
+     * is what each of them is called and what the customer is meant to do with
+     * it, said once so a bank switch is an edit to `lib/config.ts` alone.
+     */
+    payment: {
+      heading: "Pago",
+      intro:
+        "Elige cómo vas a pagar. Te mostramos los datos, pagas por tu app o banco y vuelves aquí con el número de referencia.",
+      methodLabel: "¿Cómo vas a pagar?",
+
+      /**
+       * The rails by name — short, because the same labels are what the footer
+       * advertises. What each of them means for the customer is the instruction
+       * below, shown once the rail is chosen.
+       */
+      methods: {
+        "pago-movil": "Pago Móvil",
+        transferencia: "Transferencia",
+        zelle: "Zelle",
+        binance: "Binance / USDT",
+        efectivo: "Efectivo",
+      } satisfies Record<PaymentMethod, string>,
+
+      /** One line above each account block: what to do with what is below it. */
+      instructions: {
+        "pago-movil":
+          "Haz el Pago Móvil con estos datos y luego escribe el número de referencia.",
+        transferencia:
+          "Transfiere a esta cuenta y luego escribe el número de referencia.",
+        zelle:
+          "Envía el Zelle a estos datos y luego escribe el número de confirmación.",
+        binance:
+          "Envía el USDT por la red indicada y luego escribe el ID de la transacción.",
+        /** Says nothing about a courier: cash is also how a pickup is paid. */
+        efectivo:
+          "Pagas en efectivo al recibir el pedido, sin adelanto. No hace falta número de referencia.",
+      } satisfies Record<PaymentMethod, string>,
+
+      /** What each line of an account block is called. */
+      details: {
+        phone: "Teléfono",
+        idNumber: "Cédula / RIF",
+        bankCode: "Código de banco",
+        accountNumber: "Número de cuenta",
+        holder: "Titular",
+        bank: "Banco",
+        zelleAccount: "Correo o teléfono Zelle",
+        payId: "Pay ID",
+        wallet: "Wallet USDT",
+        network: "Red",
+      },
+
+      reference: "Número de referencia",
+      referenceHint:
+        "Los últimos dígitos que te da el banco o la app al confirmar el pago.",
+      /** A deep-link cannot carry an image, so the customer is told plainly. */
+      receiptNote:
+        "Envíanos la captura del comprobante en el chat de WhatsApp: el enlace abre la conversación, pero la imagen la adjuntas tú.",
+
+      changeToggle: "¿Necesitas vuelto?",
+      changeAmount: "¿Con cuánto vas a pagar?",
+      /** No mention of a mensajero: cash is also how a pickup is paid. */
+      changeAmountHint: "Ej: 50. Así llevamos tu vuelto listo.",
+
+      submit: "Enviar pedido por WhatsApp",
+      /** Says why the button is off, rather than leaving it a dead end. */
+      submitBlocked: "Completa los campos obligatorios para enviar tu pedido.",
     },
 
     summary: {

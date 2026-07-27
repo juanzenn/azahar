@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Container } from "@/components/container";
 import { catalog } from "@/lib/catalog";
 import { shopConfig, whatsappChatUrl } from "@/lib/config";
+import { availableRails } from "@/lib/payment";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
@@ -10,6 +11,10 @@ import { strings } from "@/lib/strings";
  * Site footer. This is where contact lives — there is deliberately no contact
  * page — alongside the accepted payment methods, which act as trust signals
  * for a shop that takes payment out-of-band.
+ *
+ * Those methods are the same rails checkout offers, read from the same config
+ * rather than listed again here: a footer still advertising a rail the shop has
+ * switched off is a promise the checkout page then refuses to keep.
  *
  * The Explora column links the browse surfaces; the full taxonomy runs along the
  * bottom, giving every page a way into any category. Ten links are too many for
@@ -84,8 +89,8 @@ export async function SiteFooter() {
             <div>
               <h2 className="eyebrow">{strings.footer.paymentsHeading}</h2>
               <ul className="text-ink-muted mt-4 space-y-2 text-sm">
-                {strings.footer.paymentMethods.map((method) => (
-                  <li key={method}>{method}</li>
+                {availableRails(shopConfig.paymentRails).map((rail) => (
+                  <li key={rail.method}>{rail.label}</li>
                 ))}
               </ul>
             </div>
