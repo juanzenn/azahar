@@ -8,6 +8,8 @@ import { FacetPanel } from "@/components/facet-panel";
 import { FilterChips } from "@/components/filter-chips";
 import { NoResults } from "@/components/no-results";
 import { ProductGrid } from "@/components/product-grid";
+import { ResultsHeading } from "@/components/results-heading";
+import type { ResultsScope } from "@/components/results-scope";
 import { ResultsPagination } from "@/components/results-pagination";
 import {
   Sheet,
@@ -31,15 +33,6 @@ import { SORTS, parseCriteria, search, toSearchParams } from "@/lib/search";
 import type { Criteria, Sort } from "@/lib/search";
 import { strings } from "@/lib/strings";
 
-/**
- * Which surface this is. Global search offers the category facet; a category
- * page has its category fixed by the path, so the group is omitted, the fixed
- * category is not a chip, and "Limpiar todo" leaves you where you are —
- * `usePathname` already points at the right base URL.
- */
-export type ResultsScope =
-  { kind: "search" } | { kind: "category"; category: Category };
-
 /** Long enough to swallow a burst of typing, short enough to feel live. */
 const QUERY_DEBOUNCE_MS = 250;
 
@@ -58,6 +51,11 @@ const QUERY_DEBOUNCE_MS = 250;
  *
  * There is no loading state anywhere: `search` is a synchronous pass over an
  * array that is already in memory.
+ *
+ * Both entry points are this one component. Everything the scope changes is
+ * below; nothing else here knows which route it is on, and the base URL every
+ * write lands on is simply `usePathname`, which is what keeps a category page's
+ * "Limpiar todo" on the category.
  */
 export function SearchResults({
   products,
@@ -160,18 +158,6 @@ export function SearchResults({
 
   const { search: copy } = strings;
 
-  // Global search is titled by its own result count; a category page is titled
-  // by the category, and its hero already owns the page's h1.
-  const Heading = scope.kind === "search" ? "h1" : "h2";
-  const heading =
-    scope.kind === "category"
-      ? scope.category.name
-      : criteria.query
-        ? copy.resultCountFor(total, criteria.query)
-        : copy.resultCount(total);
-  const subheading =
-    scope.kind === "category" ? copy.productCount(total) : null;
-
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[256px_1fr] lg:gap-11">
       <aside className="hidden lg:sticky lg:top-[98px] lg:block">
@@ -206,14 +192,7 @@ export function SearchResults({
           ref={resultsTop}
           className="mt-7 flex scroll-mt-[92px] flex-wrap items-baseline justify-between gap-x-6 gap-y-3"
         >
-          <div>
-            <Heading className="font-serif text-[26px] font-medium">
-              {heading}
-            </Heading>
-            {subheading && (
-              <p className="text-ink-muted mt-1 text-[13px]">{subheading}</p>
-            )}
-          </div>
+          <ResultsHeading scope={scope} total={total} query={criteria.query} />
 
           <div className="flex items-center gap-4">
             <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>

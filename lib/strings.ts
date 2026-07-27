@@ -147,6 +147,22 @@ export const strings = {
     home: "Inicio",
   },
 
+  /**
+   * The categories index. It carries real weight: the header has no dropdown,
+   * so this page — not a menu — is where a customer picks a format.
+   */
+  categories: {
+    title: "Categorías",
+    /** A few formats as examples, not the taxonomy — that would go stale in
+        `data/categories.ts` without anyone noticing here. */
+    description:
+      "Explora todo el catálogo de Azahar por formato: ramos, arreglos, cajas, plantas y más.",
+    eyebrow: "Todo el catálogo",
+    heading: "Explora por categoría",
+    intro:
+      "Diez maneras de regalar flores. Entra en la que te interese y afina desde ahí por ocasión, tipo de flor, color, tamaño y precio.",
+  },
+
   search: {
     title: "Buscar",
     description:

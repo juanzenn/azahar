@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Container } from "@/components/container";
+import { catalog } from "@/lib/catalog";
 import { shopConfig, whatsappChatUrl } from "@/lib/config";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
@@ -10,10 +11,17 @@ import { strings } from "@/lib/strings";
  * page — alongside the accepted payment methods, which act as trust signals
  * for a shop that takes payment out-of-band.
  *
- * The Explora column links the browse surfaces. Per-category links join it once
- * the catalog exists and can be read through the seam.
+ * The Explora column links the browse surfaces; the full taxonomy runs along the
+ * bottom, giving every page a way into any category. Ten links are too many for
+ * a column beside the others, and a row across the foot of the page suits an
+ * editorial layout better than a list that dwarfs its neighbours.
+ *
+ * Reads the seam at build time — the layout renders this on every prerendered
+ * page, so the cost disappears into the static output.
  */
-export function SiteFooter() {
+export async function SiteFooter() {
+  const categories = await catalog.listCategories();
+
   const links = [
     { href: routes.home, label: strings.footer.home },
     { href: routes.categories, label: strings.footer.categories },
@@ -84,7 +92,27 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <p className="border-hairline text-ink-muted mt-12 border-t pt-6 text-xs">
+        <nav
+          // The taxonomy's own name, not the Explora link's label — the two are
+          // the same word today and have no reason to be the same string.
+          aria-label={strings.categories.title}
+          className="border-hairline mt-12 border-t pt-6"
+        >
+          <ul className="text-ink-muted flex flex-wrap gap-x-5 gap-y-2 text-[13px]">
+            {categories.map((category) => (
+              <li key={category.slug}>
+                <Link
+                  href={routes.category(category.slug)}
+                  className="hover:text-ink underline-offset-4 transition-colors hover:underline"
+                >
+                  {category.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <p className="text-ink-muted mt-7 text-xs">
           {strings.footer.rights(new Date().getFullYear())}
         </p>
       </Container>

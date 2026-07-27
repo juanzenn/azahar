@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { ResultsScope } from "@/components/results-scope";
 import { SearchResults } from "@/components/search-results";
 import type { Category, Product } from "@/lib/catalog/types";
 
@@ -22,9 +23,11 @@ import type { Category, Product } from "@/lib/catalog/types";
  * test is that round trip, so the stub has to close it.
  */
 const { router, url } = vi.hoisted(() => {
-  const url = { params: new URLSearchParams() };
+  const url = { pathname: "/buscar", params: new URLSearchParams() };
   const navigate = (href: string) => {
-    url.params = new URLSearchParams(href.split("?")[1] ?? "");
+    const [pathname, query = ""] = href.split("?");
+    url.pathname = pathname;
+    url.params = new URLSearchParams(query);
   };
 
   return { url, router: { replace: vi.fn(navigate), push: vi.fn(navigate) } };
@@ -32,7 +35,7 @@ const { router, url } = vi.hoisted(() => {
 
 vi.mock("next/navigation", () => ({
   useRouter: () => router,
-  usePathname: () => "/buscar",
+  usePathname: () => url.pathname,
   useSearchParams: () => url.params,
 }));
 
@@ -69,24 +72,36 @@ const CATALOG: Product[] = [
 ];
 
 /** A fresh element each time, so a re-render is never bailed out of. */
-const island = () => (
+const island = (scope: ResultsScope) => (
   <SearchResults
     products={CATALOG}
     categories={CATEGORIES}
     suggestions={[]}
-    scope={{ kind: "search" }}
+    scope={scope}
   />
 );
 
-function mount(params = "") {
+function mountAt(pathname: string, scope: ResultsScope, params: string) {
+  url.pathname = pathname;
   url.params = new URLSearchParams(params);
-  const view = render(island());
+  const view = render(island(scope));
 
   return {
     /** What Next does once a navigation lands: render the route again. */
-    navigated: () => view.rerender(island()),
+    navigated: () => view.rerender(island(scope)),
   };
 }
+
+/** Global search, at `/buscar`. */
+const mount = (params = "") => mountAt("/buscar", { kind: "search" }, params);
+
+/** The same island as a category page, where the path fixes the category. */
+const mountCategory = (params = "") =>
+  mountAt(
+    "/categoria/ramos",
+    { kind: "category", category: CATEGORIES[0] },
+    params,
+  );
 
 beforeAll(() => {
   // Paging scrolls to the top of the results, which jsdom has no notion of.
@@ -216,5 +231,70 @@ describe("SearchResults", () => {
     navigated();
 
     expect(screen.getByRole("searchbox")).toHaveValue("");
+  });
+});
+
+/**
+ * The same island, scoped by a path instead of a param.
+ *
+ * Everything above still holds — these cover only the four places the scope
+ * changes the answer, each of which is wiring no pure test can see: whether the
+ * island really passes the fixed category down as fixed, and whether what it
+ * writes to the URL keeps the customer on the page they chose.
+ */
+describe("SearchResults on a category page", () => {
+  it("stays on the category when everything is cleared", async () => {
+    const user = userEvent.setup();
+    mountCategory("col=rojo&sort=name");
+
+    await user.click(screen.getByRole("button", { name: "Limpiar todo" }));
+
+    // Not `/buscar` — clearing the filters must not dump a customer out of the
+    // category into global search.
+    expect(router.replace).toHaveBeenCalledWith("/categoria/ramos", {
+      scroll: false,
+    });
+  });
+
+  it("writes filter changes back to the category's own path", async () => {
+    const user = userEvent.setup();
+    mountCategory();
+
+    await user.click(screen.getByRole("checkbox", { name: /^Rojo/ }));
+
+    expect(router.replace).toHaveBeenCalledWith("/categoria/ramos?col=rojo", {
+      scroll: false,
+    });
+  });
+
+  it("leaves the Categoría group out of the filter panel", () => {
+    mountCategory();
+
+    // That the panel *can* omit the group is `lib/facets`', proven without a
+    // DOM. What is only visible here is whether the island derives the flag from
+    // its scope at all — so this asserts the group's absence and nothing else
+    // about it. The chip needs no case of its own: the criteria never carry a
+    // category on this page, per the last test here.
+    expect(
+      screen.queryByRole("heading", { name: "Categoría" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("titles the results with the category and its product count", () => {
+    mountCategory();
+
+    expect(
+      screen.getByRole("heading", { name: "Ramos", level: 2 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("14 productos")).toBeInTheDocument();
+  });
+
+  it("ignores a category param that contradicts the path", () => {
+    // Every fixture product is a `ramos`, so honouring `cat=cajas` would filter
+    // the page down to nothing — a customer must not be able to hand-edit
+    // themselves off the category they are on.
+    mountCategory("cat=cajas");
+
+    expect(screen.getByText("14 productos")).toBeInTheDocument();
   });
 });
