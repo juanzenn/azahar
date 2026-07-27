@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { Category, Product } from "@/lib/catalog";
-import { absoluteUrl, openGraph, productJsonLd, sitemapPaths } from "@/lib/seo";
+import {
+  absoluteUrl,
+  openGraph,
+  pageMetadata,
+  productJsonLd,
+  sitemapPaths,
+} from "@/lib/seo";
 import { strings } from "@/lib/strings";
 
 const SITE = "https://azahar.test";
@@ -22,13 +28,13 @@ function product(overrides: Partial<Product> = {}): Product {
     size: "mediano",
     featured: false,
     ...overrides,
-  } as Product;
+  };
 }
 
-const CATEGORIES = [
-  { slug: "ramos", name: "Ramos" },
-  { slug: "cajas", name: "Cajas" },
-] as Category[];
+const CATEGORIES: Category[] = [
+  { slug: "ramos", name: "Ramos", heroImage: "/images/categories/ramos.jpg" },
+  { slug: "cajas", name: "Cajas", heroImage: "/images/categories/cajas.jpg" },
+];
 
 describe("absoluteUrl", () => {
   it("joins a route path onto the configured site", () => {
@@ -132,6 +138,42 @@ describe("openGraph", () => {
   // Absent rather than an empty array, so the layout's own default can apply.
   it("omits images entirely when the page has none", () => {
     expect(og).not.toHaveProperty("images");
+  });
+});
+
+/**
+ * The point of the single door: a canonical is invisible when it is missing —
+ * nothing fails, the page just competes with itself — so no page gets to supply
+ * one separately from its Open Graph block.
+ */
+describe("pageMetadata", () => {
+  const meta = pageMetadata({
+    title: "Ramos — Azahar",
+    description: "Ramos de flores frescas.",
+    path: "/categoria/ramos",
+  });
+
+  it("sets the canonical from the same path as the Open Graph url", () => {
+    expect(meta.alternates?.canonical).toBe("/categoria/ramos");
+    expect(meta.openGraph?.url).toBe("/categoria/ramos");
+  });
+
+  it("carries the title and description", () => {
+    expect(meta.title).toBe("Ramos — Azahar");
+    expect(meta.description).toBe("Ramos de flores frescas.");
+  });
+
+  it("passes an image through to the Open Graph block", () => {
+    const withImage = pageMetadata({
+      title: "t",
+      description: "d",
+      path: "/p",
+      image: { url: "/images/categories/ramos.jpg", alt: "Ramos" },
+    });
+
+    expect(withImage.openGraph?.images).toEqual([
+      { url: "/images/categories/ramos.jpg", alt: "Ramos" },
+    ]);
   });
 });
 

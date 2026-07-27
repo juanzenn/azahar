@@ -262,8 +262,10 @@ rather than a filter that silently matches nothing.
   the manifest, and `lib/config.test.ts` holds it and the module to the same list. Three cases, on
   purpose: **absent** falls back (and `next.config.ts` warns once per build), **set-but-empty** is a
   deliberate blank (a Pay ID with no wallet), and **malformed** — `ENABLED=maybe`, `FEE_CENTS=5.50` —
-  fails the build, because there is no safe guess at a payment detail. Adding a config field means
-  adding the read, the placeholder and the `.env.example` line together.
+  fails the build, because there is no safe guess at a payment detail. Two readers throw on empty
+  rather than treating it as a blank, on the principle that a blank _value_ can be an answer but a
+  blank _answer_ cannot: `flag` (does this rail exist?) and `url` (what anchors every canonical link?).
+  Adding a config field means adding the read, the placeholder and the `.env.example` line together.
 - **A deploy sets `AZAHAR_STRICT_CONFIG`, and then absent stops being forgivable.** `lib/config-audit.ts`
   is the pure decision behind that — `configured` / `placeholders` / `refused` — and `next.config.ts`
   warns on the second and throws on the third. The default has to stay permissive: the placeholders are

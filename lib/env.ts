@@ -17,9 +17,12 @@
  * The distinction that earns its keep is **present but empty**. A shop with a
  * Binance Pay ID and no wallet address says so with an empty variable, and that
  * is a real answer — `lib/payment` drops blank rows on purpose — so only an
- * absent variable falls back to a placeholder. A flag is the exception: a blank
- * account number is an answer, a blank switch is not, and `ENABLED=` throws
- * rather than picking a side.
+ * absent variable falls back to a placeholder.
+ *
+ * Two readers are the exception, on the same principle: a blank *value* can be an
+ * answer, a blank *answer* cannot. `ENABLED=` throws rather than picking a side
+ * on whether a payment rail exists, and `SITE_URL=` throws rather than anchoring
+ * every canonical link and sitemap entry to nothing.
  */
 
 /** Values accepted for a boolean, beyond the obvious. `si`/`sí` for the shop. */
@@ -31,7 +34,10 @@ export type EnvReader = {
   flag(name: string, raw: string | undefined, fallback: boolean): boolean;
   /** An integer count of minor units — `0` is a value, not a missing one. */
   cents(name: string, raw: string | undefined, fallback: number): number;
-  /** An absolute `http(s)` origin, trailing slash removed. Blank is not an answer. */
+  /**
+   * An absolute `http(s)` URL, trailing slash removed. A path is kept; blank and
+   * scheme-less both throw, because neither can anchor an absolute link.
+   */
   url(name: string, raw: string | undefined, fallback: string): string;
   /** The variables that were absent, in the order they were read. */
   readonly absent: readonly string[];

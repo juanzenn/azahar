@@ -11,7 +11,7 @@ import { catalog, relatedProducts } from "@/lib/catalog";
 import { shopConfig } from "@/lib/config";
 import { formatPrice } from "@/lib/format";
 import { routes } from "@/lib/routes";
-import { openGraph, productJsonLd } from "@/lib/seo";
+import { pageMetadata, productJsonLd } from "@/lib/seo";
 import { strings } from "@/lib/strings";
 
 type ProductPageProps = {
@@ -38,23 +38,15 @@ export async function generateMetadata({
   // so falling back to the layout's own title keeps the types honest.
   if (!product) return {};
 
-  const title = `${product.name} — ${strings.site.name}`;
-  const description = product.tagline ?? product.description;
-
-  return {
-    title,
-    description,
-    alternates: { canonical: routes.product(product.slug) },
-    // The arrangement's own photograph is the share image. There is no server to
-    // compose one at request time, and a real photo of the thing being sold beats
+  return pageMetadata({
+    title: `${product.name} — ${strings.site.name}`,
+    description: product.tagline ?? product.description,
+    path: routes.product(product.slug),
+    // The arrangement's own photograph. There is no server to compose a share
+    // image at request time, and a real photo of the thing being sold beats
     // anything generated: portrait, which the platforms crop, but never wrong.
-    openGraph: openGraph({
-      title,
-      description,
-      path: routes.product(product.slug),
-      image: { url: product.images[0], alt: product.name },
-    }),
-  };
+    image: { url: product.images[0], alt: product.name },
+  });
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {

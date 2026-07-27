@@ -70,7 +70,10 @@ jobs:
             cat strict.log
             exit 1
           fi
-          grep -q "Refusing to build" strict.log || {
+          # Matched on the flag's own name, not on the message's wording: the
+          # unit tests deliberately don't pin that prose, so grepping a sentence
+          # here would break CI for a rewrite that changed nothing.
+          grep -q "AZAHAR_STRICT_CONFIG" strict.log || {
             echo "::error::the build failed, but not for the reason the gate exists"
             cat strict.log
             exit 1

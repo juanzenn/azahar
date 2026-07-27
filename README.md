@@ -6,7 +6,7 @@
 ![React](https://img.shields.io/badge/React-19-087ea4?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-278%20passing-1f4d3a)
+![Tests](https://img.shields.io/badge/tests-315%20passing-1f4d3a)
 
 Azahar is a storefront for a small florist: ~50 products across 10 categories, an Amazon-style faceted
 search, a cart, and a checkout that collects the order, shows the shop's payment details, and hands
@@ -111,7 +111,7 @@ about.
 - A single committed light palette ("Jardín"), so an OS dark-mode preference can't hijack the design.
 
 The shopping path is end to end: browse, filter, add to cart, check out, pay out-of-band, send the
-order. What is left is real photography — see the [roadmap](#roadmap).
+order, on real photography throughout. What is left is shipping it — see the [roadmap](#roadmap).
 
 ## Architecture
 
@@ -153,7 +153,7 @@ demo shop. See [Configuration](#configuration).
 | Framework            | Next.js 16, App Router, `output: "export"`                                                       |
 | UI                   | React 19, Tailwind CSS 4, shadcn/ui primitives vendored into the repo (not a runtime dependency) |
 | Language             | TypeScript, `strict`, no `any`, path alias `@/*`                                                 |
-| Tests                | Vitest 4 + React Testing Library, jsdom — 278 tests                                              |
+| Tests                | Vitest 4 + React Testing Library, jsdom — 315 tests                                              |
 | Tooling              | ESLint (flat config), Prettier + `prettier-plugin-tailwindcss`, Node 26, npm                     |
 | Runtime dependencies | None for logic. Search, cart, order and payment are dependency-free                              |
 
@@ -191,11 +191,11 @@ cp .env.example .env.local
 
 Every variable is optional and the module handles three cases on purpose:
 
-|                   |                                                                                                                                                                     |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Absent**        | Falls back to a placeholder, and the build warns once listing what it didn't find. A clone with no environment still builds the demo shop.                          |
-| **Set but empty** | A deliberate blank. A shop with a Binance Pay ID and no wallet address says so this way, and blank rows aren't rendered.                                            |
-| **Malformed**     | Fails the build. There is no honest reading of `ENABLED=maybe`, and `FEE_CENTS=5.50` silently becoming 5 cents would misprice every order by a factor of a hundred. |
+|                   |                                                                                                                                                                                                                                        |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Absent**        | Falls back to a placeholder, and the build warns once listing what it didn't find. A clone with no environment still builds the demo shop.                                                                                             |
+| **Set but empty** | A deliberate blank. A shop with a Binance Pay ID and no wallet address says so this way, and blank rows aren't rendered. Two exceptions throw instead — an `_ENABLED` flag and `SITE_URL`, where a blank is not an answer to anything. |
+| **Malformed**     | Fails the build. There is no honest reading of `ENABLED=maybe`, and `FEE_CENTS=5.50` silently becoming 5 cents would misprice every order by a factor of a hundred.                                                                    |
 
 They are `NEXT_PUBLIC_` because they genuinely are public — a storefront prints its phone number and
 bank details on the page. Nothing secret belongs here.
@@ -207,7 +207,7 @@ prints them into every page. It is not `NEXT_PUBLIC_`: the build reads it, and i
 
 ## Testing
 
-278 tests, and what they _don't_ cover is as deliberate as what they do.
+315 tests, and what they _don't_ cover is as deliberate as what they do.
 
 - **The pure modules get the depth.** Search, cart and order swallow the real behaviour, and none of
   them needs a DOM. The locked WhatsApp template is asserted whole, once, and every rule that shapes it
@@ -292,8 +292,10 @@ re-litigating anything. The judgment calls were still mine; the spec is where th
       Every gate runs even if an earlier one fails, so one push gets the full list.
 - [ ] Lighthouse pass — font loading strategy, explicit image dimensions, LCP on the hero.
 - [x] SEO the static export deserves: `sitemap.xml` (64 content URLs, no checkout), `robots.txt`,
-      per-page canonicals and Open Graph using the real photography, and `Product` JSON-LD — none of
-      which need a server. Set `NEXT_PUBLIC_SITE_URL`; there is no request to infer a host from.
+      per-page canonicals and Open Graph, and `Product` JSON-LD — none of which need a server. Set
+      `NEXT_PUBLIC_SITE_URL`; there is no request to infer a host from. Share images are the real
+      photography on the pages that own one — home, product, category; the three utility pages (search,
+      category index, about) share without an image rather than borrow an arrangement at random.
 
 **Hardening**
 

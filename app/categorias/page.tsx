@@ -6,19 +6,14 @@ import { Breadcrumbs, type Crumb } from "@/components/breadcrumbs";
 import { Container } from "@/components/container";
 import { catalog } from "@/lib/catalog";
 import { routes } from "@/lib/routes";
-import { openGraph } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import { strings } from "@/lib/strings";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: `${strings.categories.title} — ${strings.site.name}`,
   description: strings.categories.description,
-  alternates: { canonical: routes.categories },
-  openGraph: openGraph({
-    title: `${strings.categories.title} — ${strings.site.name}`,
-    description: strings.categories.description,
-    path: routes.categories,
-  }),
-};
+  path: routes.categories,
+});
 
 /**
  * The browse path's front door: all ten categories, each with the photograph

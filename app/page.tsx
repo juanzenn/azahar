@@ -9,7 +9,7 @@ import { SectionHeading } from "@/components/section-heading";
 import { catalog, OCCASIONS } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { routes } from "@/lib/routes";
-import { openGraph } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import { facetLabels, strings } from "@/lib/strings";
 
 /**
@@ -23,17 +23,14 @@ import { facetLabels, strings } from "@/lib/strings";
 export async function generateMetadata(): Promise<Metadata> {
   const [flagship] = await catalog.listFeaturedProducts();
 
-  return {
-    alternates: { canonical: routes.home },
-    openGraph: openGraph({
-      title: `${strings.site.name} — ${strings.site.tagline}`,
-      description: strings.site.description,
-      path: routes.home,
-      ...(flagship && {
-        image: { url: flagship.images[0], alt: flagship.name },
-      }),
+  return pageMetadata({
+    title: `${strings.site.name} — ${strings.site.tagline}`,
+    description: strings.site.description,
+    path: routes.home,
+    ...(flagship && {
+      image: { url: flagship.images[0], alt: flagship.name },
     }),
-  };
+  });
 }
 
 export default async function HomePage() {

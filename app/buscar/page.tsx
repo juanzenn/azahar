@@ -5,21 +5,16 @@ import { Container } from "@/components/container";
 import { ResultsSurface } from "@/components/results-surface";
 import { catalog } from "@/lib/catalog";
 import { routes } from "@/lib/routes";
-import { openGraph } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import { strings } from "@/lib/strings";
 
-export const metadata: Metadata = {
+// Every filter combination is this same exported file with a different query
+// string, so the bare path is the canonical one for all of them.
+export const metadata: Metadata = pageMetadata({
   title: `${strings.search.title} — ${strings.site.name}`,
   description: strings.search.description,
-  // Every filter combination is the same exported file with a different query
-  // string, so the bare path is the canonical one for all of them.
-  alternates: { canonical: routes.search },
-  openGraph: openGraph({
-    title: `${strings.search.title} — ${strings.site.name}`,
-    description: strings.search.description,
-    path: routes.search,
-  }),
-};
+  path: routes.search,
+});
 
 /**
  * Global search — and, with no params, the whole catalog paginated, which is

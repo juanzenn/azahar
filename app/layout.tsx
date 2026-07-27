@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { catalog } from "@/lib/catalog";
 import { shopConfig } from "@/lib/config";
 import { routes } from "@/lib/routes";
-import { openGraph } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import { strings } from "@/lib/strings";
 
 import "./globals.css";
@@ -19,9 +19,7 @@ import "./globals.css";
  */
 export const metadata: Metadata = {
   metadataBase: new URL(shopConfig.siteUrl),
-  title: `${strings.site.name} — ${strings.site.tagline}`,
-  description: strings.site.description,
-  openGraph: openGraph({
+  ...pageMetadata({
     title: `${strings.site.name} — ${strings.site.tagline}`,
     description: strings.site.description,
     path: routes.home,

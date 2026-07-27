@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import type { Category, Product } from "@/lib/catalog";
+import { priceDecimal } from "@/lib/format";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
@@ -24,24 +25,42 @@ import { strings } from "@/lib/strings";
 /** Venezuelan Spanish, the one locale the site ships. */
 const LOCALE = "es_VE";
 
-type OpenGraphPage = {
+export type SeoPage = {
   title: string;
   description: string;
   /** Root-relative; `metadataBase` in the layout makes it absolute at build. */
   path: string;
+  /**
+   * The page's share image, when it has one of its own. The three utility pages
+   * — search, the category index, about — have no single photograph that is
+   * honestly *theirs*, and inventing one would mean stitching an image path
+   * together outside the catalog data, which is the thing ticket 03 set up the
+   * complete-reference-string rule to prevent.
+   */
   image?: { url: string; alt: string };
 };
 
 /**
- * One page's Open Graph block, with the site-wide parts filled in.
+ * Everything one page owes a crawler: title, description, canonical, Open Graph.
  *
- * This exists because of a sharp edge in Next's metadata merge: a page's
- * `openGraph` **replaces** the layout's rather than merging into it, so every
- * page that sets a title silently drops `siteName` and `locale`. Six pages each
- * repeating those two fields is six chances to forget one; building the block
- * here means a page states only what is its own.
+ * A single door because both halves have a way of going missing quietly. Next
+ * **replaces** a parent's `openGraph` with a child's rather than merging it, so
+ * every page that sets a title would otherwise drop the layout's `siteName` and
+ * `locale`; and a canonical is invisible when absent — nothing fails, the page
+ * simply competes with itself. Pages state what is theirs and cannot forget the
+ * rest.
  */
-export function openGraph(page: OpenGraphPage) {
+export function pageMetadata(page: SeoPage): Metadata {
+  return {
+    title: page.title,
+    description: page.description,
+    alternates: { canonical: page.path },
+    openGraph: openGraph(page),
+  };
+}
+
+/** One page's Open Graph block, with the site-wide parts filled in. */
+export function openGraph(page: SeoPage) {
   // The return type is inferred rather than annotated as `Metadata["openGraph"]`,
   // which is a union whose common base has no `type` — annotating it would hide
   // the fields from every reader, tests included. `satisfies` gets the checking
@@ -54,8 +73,8 @@ export function openGraph(page: OpenGraphPage) {
     title: page.title,
     description: page.description,
     url: page.path,
-    // Absent rather than empty, so a page with no image of its own inherits
-    // whatever default the layout carries.
+    // Omitted rather than empty when a page has none: a platform showing a
+    // link with no image is a smaller loss than one showing a broken one.
     ...(page.image && { images: [page.image] }),
   } satisfies NonNullable<Metadata["openGraph"]>;
 }
@@ -102,11 +121,9 @@ export function productJsonLd(product: Product, siteUrl: string) {
     offers: {
       "@type": "Offer",
       url: absoluteUrl(routes.product(product.slug), siteUrl),
-      // Minor units are the app's currency everywhere; schema.org wants major,
-      // as a string. Splitting the integer keeps the conversion off floats.
-      price: `${Math.floor(product.priceUsdCents / 100)}.${String(
-        product.priceUsdCents % 100,
-      ).padStart(2, "0")}`,
+      // Through `lib/format` like every other amount in the app — minor units
+      // are the catalog's currency, and this is the machine-readable rendering.
+      price: priceDecimal(product.priceUsdCents),
       priceCurrency: "USD",
     },
   };

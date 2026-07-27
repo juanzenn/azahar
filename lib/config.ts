@@ -215,10 +215,12 @@ export function whatsappChatUrl(): string {
  * The configuration variables this build did not find, and so served from
  * placeholders. Empty on a fully configured deploy.
  *
- * Reported by `next.config.ts` rather than from this module's scope, which Next
- * evaluates once per route and not once per build — a warning here prints dozens
- * of times. `npm run build` deliberately does not *fail* on a missing value: the
- * demo shop is the reason a clone of this repository runs at all.
+ * Not what gates a build — `lib/config-audit` decides that, from `.env.example`
+ * and the environment, because `next.config.ts` is the one place Next evaluates
+ * per *build* and this module is evaluated once per route. What this is for is
+ * `lib/config.test.ts`, which runs with no shop variables set and uses it to
+ * assert that every documented variable really does fall back: a read that
+ * silently stopped happening would otherwise be invisible.
  */
 export function absentShopConfig(): readonly string[] {
   return env.absent;
