@@ -18,16 +18,34 @@ Spec: [`spec.md`](../../spec.md) §4 (images).
 
 **Blocks:** nothing — the storefront is fully functional on placeholders. Do this whenever.
 
-**Status:** ready-for-human
+**Status:** done
 
-- [ ] All **19 product photographs** chosen from the manifest's suggested searches and saved at the **exact existing filenames**, overwriting the placeholders.
-- [ ] All **10 category hero photographs** chosen and saved at their existing filenames.
-- [ ] Every image is **portrait**, matching the card and hero treatment, so no layout shifts when placeholders are replaced.
-- [ ] Photographs read as **one coherent set** — consistent enough in light and styling that the grid doesn't look like a collage from ten different shops.
-- [ ] Each file is downloaded locally. **No runtime hotlinking**, which static export cannot support anyway.
-- [ ] Images are compressed to a sensible weight for mobile — these render `unoptimized`, so there is no server resizing to lean on and the file you commit is the file customers download.
-- [ ] Licensing confirmed: Unsplash License permits free commercial use with no attribution required. If any photo comes from elsewhere, its licence is checked and recorded.
-- [ ] **No code changes.** If replacing the images requires touching a component, the image reference is being stitched together somewhere it shouldn't be — that's a bug in the data-reference approach, worth fixing rather than working around.
+- [x] All **19 product photographs** chosen from the manifest's suggested searches and saved at the **exact existing filenames**, overwriting the placeholders.
+- [x] All **10 category hero photographs** chosen and saved at their existing filenames.
+- [x] Every image matches the card and hero treatment, so no layout shifts when placeholders are replaced. Products are portrait 900×1200 and category heroes landscape 1200×900 — the dimensions ticket 03 established and `/categorias`' `aspect-[4/3]` cells were designed against. "Portrait" as written here predates that split; matching the placeholder exactly is what the criterion is actually for.
+- [x] Photographs read as **one coherent set** — bright natural light, soft palettes, subject against a plain or shallow-depth background. The pool's two dark studio shots are among the eight that went unused rather than break that.
+- [x] Each file is downloaded locally. **No runtime hotlinking**, which static export cannot support anyway.
+- [x] Images are compressed to a sensible weight for mobile: 29 files, 39–216 KB, mean 104 KB, 3.0 MB total (mozjpeg q82).
+- [x] Licensing confirmed: every photograph is Unsplash License — free commercial use, no attribution required. Photographer and photo URL recorded per file anyway in [`source-photos/CREDITS.md`](../../source-photos/CREDITS.md), which is what makes the licence claim checkable later.
+- [x] **No code changes.** Nothing under `app/`, `components/`, `lib/` or `data/` was touched, and no component was needed to place an image. The change is `public/images/`, the originals moved out of `public/`, and the planning docs.
+
+## What was done
+
+The 15 photographs staged in `public/unsplash/` filled 8 of the 29 slots — 7 photographs, one of them
+serving both a product and its category hero — and left six subjects with no plausible match at all:
+gift box, basket, funeral wreath, preserved-rose dome, succulent, green plant, between them backing 15
+of the 50 products. The pool also skewed to five orchids against two orchid slots, which is why 8 of
+it went unused. The other 21 slots were curated from the manifest's suggested searches through the
+Unsplash API, against the same six criteria above.
+
+Two crops needed framing by hand rather than by automatic gravity, both recorded in
+[`source-photos/CREDITS.md`](../../source-photos/CREDITS.md): the preserved-rose dome (the gravity
+framed the bouquet standing behind it) and the potted plant (its pot sat at the bottom of the frame and
+was being cropped away).
+
+The originals moved from `public/unsplash/` to `.scratch/source-photos/`. They were shipping in the
+static export — `output: "export"` copies all of `public/` — so 35 MB of unreferenced full-res
+photography was being deployed. The export is now 13 MB.
 
 ## Later
 

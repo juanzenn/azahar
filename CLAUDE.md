@@ -290,16 +290,20 @@ exercises it).
 - `.scratch/map.md` — the wayfinder index of locked decisions, one line per planning ticket.
 - `.scratch/build/issues/01-14.md` — the implementation tickets, in dependency order.
 - `.scratch/seed/products.md` — the authored 50-product catalog content.
+- `.scratch/source-photos/` — the full-resolution photography originals plus `CREDITS.md`, which
+  records each one's photographer, licence and the `public/images/` slot it was cropped into.
 
 **One ticket, one commit**, message `feat(NN): <summary>`. Progress is tracked by commit history and
 by the ticket checkboxes.
 
-Tickets 01–13 are complete: scaffold, catalog seam, imagery, about/404, home, product detail, search
+Tickets 01–14 are complete: scaffold, catalog seam, imagery, about/404, home, product detail, search
 module, results island + `/buscar`, categories index + category pages, cart, checkout details, the
-payment rails + submit gate, and dispatch + confirmation. **The shopping path is end to end**: browse,
-filter, add to cart, check out, pay out-of-band, send the order by WhatsApp.
+payment rails + submit gate, dispatch + confirmation, and curated photography. **The shopping path is
+end to end**: browse, filter, add to cart, check out, pay out-of-band, send the order by WhatsApp.
 
-Next is **14 — curate real photography**, which is `ready-for-human` and blocks nothing: 29 real
-photographs saved over the placeholders at their existing filenames. **No code changes** — if replacing
-an image needs a component touched, an image reference is being stitched together somewhere it
-shouldn't be.
+Photography lives at the 29 filenames the catalog data already points at, and swapping it needs **no
+code change** — that is the whole point of storing complete image reference strings. The originals,
+their provenance and the crop that produced each slot are recorded in
+[`.scratch/source-photos/`](.scratch/source-photos/CREDITS.md). They sit outside `public/` on purpose:
+`output: "export"` copies all of `public/` into the deployed build, so an unreferenced original is
+weight every customer downloads.

@@ -274,9 +274,10 @@ re-litigating anything. The judgment calls were still mine; the spec is where th
 
 **Finishing the build**
 
-- [ ] **Real photography** (ticket 14) — replace the placeholder imagery with a curated, correctly
-      sized set. Because the export is unoptimized, the committed assets _are_ the delivered assets. The
-      last ticket, and the only one that needs taste rather than code.
+- [x] **Real photography** (ticket 14) — the placeholder imagery is replaced with a curated set at the
+      placeholders' exact dimensions. Because the export is unoptimized, the committed assets _are_ the
+      delivered assets: 29 files, mean 104 KB. Provenance and licence per file are in
+      [`.scratch/source-photos/CREDITS.md`](.scratch/source-photos/CREDITS.md).
 
 **Making it presentable**
 
