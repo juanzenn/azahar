@@ -232,8 +232,37 @@ export const strings = {
   },
 
   product: {
+    addToCart: "Agregar al carrito",
+    /** The confirmation that replaces navigating away, alongside the badge. */
+    added: "Agregado a tu carrito",
+    viewCart: "Ver el carrito",
     relatedEyebrow: "También te puede gustar",
     relatedHeading: "Más de esta categoría",
+  },
+
+  cart: {
+    title: "Carrito",
+    description: "Revisa lo que elegiste antes de finalizar tu pedido.",
+    heading: "Tu carrito",
+    itemCount: (count: number) =>
+      count === 1 ? "1 artículo" : `${count} artículos`,
+
+    /** "$25 c/u" — the unit price beside a line that may hold several. */
+    unitPrice: (price: string) => `${price} c/u`,
+    quantity: "Cantidad",
+    /** Naming the product keeps a row's steppers apart from the next row's. */
+    increase: (name: string) => `Agregar uno más de ${name}`,
+    decrease: (name: string) => `Quitar uno de ${name}`,
+    remove: "Quitar",
+    removeItem: (name: string) => `Quitar ${name} del carrito`,
+
+    subtotal: "Subtotal",
+    subtotalNote: "El envío se calcula al finalizar la compra.",
+    keepShopping: "Seguir comprando",
+
+    emptyHeading: "Tu carrito está vacío",
+    emptyBody:
+      "Todavía no has agregado nada. Explora el catálogo y aquí te esperará lo que elijas.",
   },
 
   about: {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
+import { AddToCart } from "@/components/add-to-cart";
 import { Breadcrumbs, type Crumb } from "@/components/breadcrumbs";
 import { Container } from "@/components/container";
 import { ProductCard } from "@/components/product-card";
@@ -103,6 +104,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <p className="text-ink-muted mt-7 max-w-[52ch] text-[16px] leading-[1.7]">
               {product.description}
             </p>
+
+            <AddToCart slug={product.slug} />
           </div>
         </div>
       </Container>
