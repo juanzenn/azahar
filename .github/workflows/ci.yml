@@ -1,0 +1,77 @@
+name: CI
+
+# The four gates CLAUDE.md documents, plus proof that the deploy gate is wired.
+# Until now all of them ran locally only, which lasts exactly as long as one
+# person is touching the repo.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push supersedes the run in flight for the same ref. `main` is excluded
+# from the cancellation so its history keeps a result for every commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # `.nvmrc` is the single statement of the version, as it is locally.
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # `!cancelled()` rather than the default: a pull request should come back
+      # with every gate that failed, not the first one, so it takes one push to
+      # fix rather than one push per gate.
+      - name: Typecheck
+        if: ${{ !cancelled() }}
+        run: npm run typecheck
+
+      - name: Lint
+        if: ${{ !cancelled() }}
+        run: npm run lint
+
+      - name: Format
+        if: ${{ !cancelled() }}
+        run: npm run format:check
+
+      - name: Test
+        if: ${{ !cancelled() }}
+        run: npm test
+
+      # Deliberately the demo build, with no shop configuration set: CI holds no
+      # real payment details, and the placeholder path is what a fresh clone
+      # gets, so this is the build worth proving keeps working.
+      - name: Build
+        if: ${{ !cancelled() }}
+        run: npm run build
+
+      # The gate's decision is unit-tested; this proves it is *wired* — that
+      # `next.config.ts` turns a refusal into a non-zero exit. Cheap, because it
+      # fails while Next is still loading its config.
+      - name: Strict config refuses a placeholder build
+        if: ${{ !cancelled() }}
+        env:
+          AZAHAR_STRICT_CONFIG: "1"
+        run: |
+          if npm run build > strict.log 2>&1; then
+            echo "::error::AZAHAR_STRICT_CONFIG=1 built anyway; the deploy gate is not wired"
+            cat strict.log
+            exit 1
+          fi
+          grep -q "Refusing to build" strict.log || {
+            echo "::error::the build failed, but not for the reason the gate exists"
+            cat strict.log
+            exit 1
+          }

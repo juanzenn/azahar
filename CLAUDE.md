@@ -12,7 +12,13 @@ npm run test:watch   # vitest
 npm run typecheck    # tsc --noEmit
 npm run lint         # eslint (flat config)
 npm run format       # prettier --write .
+npm run format:check # prettier --check . (what CI runs)
 ```
+
+`.github/workflows/ci.yml` runs all five on every pull request and every push to `main`, and each gate
+runs even when an earlier one failed, so a push comes back with the whole list. It also asserts that
+`AZAHAR_STRICT_CONFIG=1` **refuses** to build — the audit's decision is unit-tested, but that step is
+what proves it is wired to a non-zero exit.
 
 Run a single test file or a single case:
 

@@ -282,7 +282,9 @@ re-litigating anything. The judgment calls were still mine; the spec is where th
 **Making it presentable**
 
 - [ ] Deploy it, and put a live demo link and screenshots at the top of this README.
-- [ ] CI on pull requests: typecheck, lint, test, build. Currently all four run locally only.
+- [x] CI on pull requests: typecheck, lint, format, test, build — plus a step asserting that strict
+      config mode refuses a placeholder build, which is the half of that gate a unit test can't reach.
+      Every gate runs even if an earlier one fails, so one push gets the full list.
 - [ ] Lighthouse pass — font loading strategy, explicit image dimensions, LCP on the hero.
 - [ ] SEO the static export deserves: `sitemap.xml`, `robots.txt`, per-page Open Graph images, and
       `Product` JSON-LD, none of which need a server.
