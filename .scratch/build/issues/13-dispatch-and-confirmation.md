@@ -12,11 +12,11 @@ Spec: [`spec.md`](../../spec.md) §9 (dispatch, handoff, order code, message tem
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Submitting builds the order and a **single `wa.me` deep-link**: number is country-code + digits only (no `+`, no leading zero, no dashes), the whole message **encoded exactly once**, newlines as `%0A`.
-- [ ] The whole URL stays **under ~2000 chars**, asserted in a test against a deliberately large cart.
-- [ ] **Message sections appear only when relevant** — recipient only if it's a gift, address only on delivery, tarjeta and notas only if filled — to stay readable and under the URL ceiling. WhatsApp `*bold*` markers throughout. The locked template (inlined because the conditional structure *is* the decision):
+- [x] Submitting builds the order and a **single `wa.me` deep-link**: number is country-code + digits only (no `+`, no leading zero, no dashes), the whole message **encoded exactly once**, newlines as `%0A`.
+- [x] The whole URL stays **under ~2000 chars**, asserted in a test against a deliberately large cart.
+- [x] **Message sections appear only when relevant** — recipient only if it's a gift, address only on delivery, tarjeta and notas only if filled — to stay readable and under the URL ceiling. WhatsApp `*bold*` markers throughout. The locked template (inlined because the conditional structure *is* the decision):
 
   ```
   Hola Azahar 🌸 Quiero confirmar mi pedido *AZ-7K3Q*
@@ -55,12 +55,12 @@ Spec: [`spec.md`](../../spec.md) §9 (dispatch, handoff, order code, message tem
   Entregar antes del mediodía si es posible
   ```
 
-- [ ] **Efectivo variant** of the payment block: `Método: Efectivo (pago contra entrega)` plus `Vuelto: Pago con $50` **only** when change was requested.
-- [ ] A client-generated **`AZ-XXXX`** order code (4 base-36 chars) appears in the message and on the confirmation page. Its randomness source is **injectable**, or the code is untestable.
-- [ ] On submit the order is stashed in **`sessionStorage`** and the customer is routed to `/pedido-enviado`.
-- [ ] `/pedido-enviado` shows: the **full order summary**, the **order code**, a prominent **"Abrir WhatsApp para enviar tu pedido 🌸"** button carrying the deep-link, the **raw shop number with a copy button** beside it, and the **comprobante reminder**.
-- [ ] The **cart is cleared on arrival** at the confirmation page — so a reload cannot produce a duplicate order — while the WhatsApp link stays **re-openable** if the first attempt failed.
-- [ ] Landing on the confirmation page **with no stashed order redirects home**, never showing an empty broken page.
-- [ ] The customer must press Send in WhatsApp themselves; there is no auto-send, and the UI does not imply otherwise.
-- [ ] `lib/order` tests cover: message assembly with sections conditionally present, the efectivo variant, **encoded exactly once** (no double-encoding), `%0A` newlines, the URL-length ceiling, and order-code generation via the injected randomness source.
-- [ ] **Text only** — no attempt to pre-attach the comprobante, which a deep-link cannot do. No email, no `mailto:`, no third-party form service.
+- [x] **Efectivo variant** of the payment block: `Método: Efectivo (pago contra entrega)` plus `Vuelto: Pago con $50` **only** when change was requested.
+- [x] A client-generated **`AZ-XXXX`** order code (4 base-36 chars) appears in the message and on the confirmation page. Its randomness source is **injectable**, or the code is untestable.
+- [x] On submit the order is stashed in **`sessionStorage`** and the customer is routed to `/pedido-enviado`.
+- [x] `/pedido-enviado` shows: the **full order summary**, the **order code**, a prominent **"Abrir WhatsApp para enviar tu pedido 🌸"** button carrying the deep-link, the **raw shop number with a copy button** beside it, and the **comprobante reminder**.
+- [x] The **cart is cleared on arrival** at the confirmation page — so a reload cannot produce a duplicate order — while the WhatsApp link stays **re-openable** if the first attempt failed.
+- [x] Landing on the confirmation page **with no stashed order redirects home**, never showing an empty broken page.
+- [x] The customer must press Send in WhatsApp themselves; there is no auto-send, and the UI does not imply otherwise.
+- [x] `lib/order` tests cover: message assembly with sections conditionally present, the efectivo variant, **encoded exactly once** (no double-encoding), `%0A` newlines, the URL-length ceiling, and order-code generation via the injected randomness source.
+- [x] **Text only** — no attempt to pre-attach the comprobante, which a deep-link cannot do. No email, no `mailto:`, no third-party form service.

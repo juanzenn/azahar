@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CART_STORAGE_KEY } from "@/lib/cart";
 import type { Cart } from "@/lib/cart";
 import type { Product } from "@/lib/catalog/types";
-import { toIsoDate } from "@/lib/order";
+import { readStashedOrder, toIsoDate } from "@/lib/order";
 import type { PaymentRail } from "@/lib/payment";
 
 /**
@@ -22,8 +22,9 @@ import type { PaymentRail } from "@/lib/payment";
  * passes a green `lib/order`.
  *
  * So each assertion below is about connection: a toggle changes what is asked
- * for, a method changes what is owed, a rail changes what is on screen, and an
- * empty cart never gets a form.
+ * for, a method changes what is owed, a rail changes what is on screen, an empty
+ * cart never gets a form, and pressing send hands the order on. What the message
+ * *says* is `lib/order`'s, proven without a DOM, and not restated here either.
  */
 
 const router = vi.hoisted(() => ({ replace: vi.fn(), push: vi.fn() }));
@@ -48,6 +49,7 @@ function product(slug: string, name: string, priceUsdCents: number): Product {
 
 const CATALOG = [product("ramo", "Ramo Primavera", 2500)];
 const FEE = 500;
+const SHOP_NUMBER = "584121234567";
 
 /**
  * Rails as the page receives them — hand-built rather than run through
@@ -98,6 +100,7 @@ async function visit(cart: Cart = [{ slug: "ramo", qty: 2 }]) {
         products={CATALOG}
         deliveryFeeUsdCents={FEE}
         rails={RAILS}
+        whatsappNumber={SHOP_NUMBER}
       />
     </CartProvider>,
   );
@@ -144,9 +147,19 @@ const summary = () => screen.getByRole("complementary").textContent ?? "";
 const block = (heading: string) =>
   screen.queryByRole("heading", { name: heading });
 
+/**
+ * jsdom has no windows to open, and this is the one thing on the page with a side
+ * effect outside it — so it is stubbed rather than merely tolerated, and the stub
+ * is what proves the deep-link was opened from the click.
+ */
+const openTab = vi.spyOn(window, "open").mockReturnValue(null);
+
 beforeEach(() => {
   window.localStorage.clear();
+  window.sessionStorage.clear();
   router.replace.mockClear();
+  router.push.mockClear();
+  openTab.mockClear();
 });
 
 describe("the checkout island", () => {
@@ -301,6 +314,48 @@ describe("the checkout island", () => {
 
     await user.type(screen.getByLabelText(/^Número de referencia/), "00123456");
     expect(submitButton()).toBeEnabled();
+  });
+
+  /**
+   * Dispatch, as wiring: three things have to happen from one press, and the
+   * order they happen in is the point. The message's contents, its length and its
+   * order code are `lib/order`'s and are not looked at here — what is under test
+   * is that the button is connected to them at all.
+   */
+  it("hands the order on to WhatsApp and to the confirmation page", async () => {
+    const { user, chooseRail, fillDetails } = await visit();
+
+    await fillDetails();
+    await chooseRail(/^Pago Móvil/);
+    await user.type(screen.getByLabelText(/^Número de referencia/), "00123456");
+    await user.click(submitButton());
+
+    // Opened from the click itself, in a new tab, so the customer keeps the page
+    // the confirmation is about to replace.
+    expect(openTab).toHaveBeenCalledWith(
+      expect.stringContaining(`https://wa.me/${SHOP_NUMBER}?text=`),
+      "_blank",
+    );
+
+    // Stashed, because the confirmation page is a fresh load of a static page and
+    // has no other way to know what was ordered.
+    const stashed = readStashedOrder(window.sessionStorage);
+    expect(stashed?.code).toMatch(/^AZ-/);
+    expect(stashed?.items).toHaveLength(1);
+
+    expect(router.push).toHaveBeenCalledWith("/pedido-enviado");
+  });
+
+  // Nothing was sent, so nothing should have been stashed or opened — the gate is
+  // what stands between a half-filled form and a chat full of it.
+  it("dispatches nothing at all while the order is incomplete", async () => {
+    const { user } = await visit();
+
+    await user.click(submitButton());
+
+    expect(openTab).not.toHaveBeenCalled();
+    expect(router.push).not.toHaveBeenCalled();
+    expect(readStashedOrder(window.sessionStorage)).toBeNull();
   });
 
   it("sends a customer with an empty cart back to the cart", async () => {

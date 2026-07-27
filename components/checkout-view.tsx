@@ -20,10 +20,15 @@ import {
   DELIVERY_METHODS,
   EMPTY_FORM,
   MAX_CARD_MESSAGE_LENGTH,
+  MAX_NOTES_LENGTH,
   PAYMENT_METHODS,
   TIME_WINDOWS,
+  buildOrder,
+  orderCode,
+  orderToWhatsAppUrl,
   quoteOrder,
   requiredFields,
+  stashOrder,
   toIsoDate,
   validate,
 } from "@/lib/order";
@@ -58,19 +63,25 @@ const copy = strings.checkout;
  * **The submit gate is not a second opinion.** It asks `validate` whether
  * anything is wrong and nothing else — so the button cannot be enabled while an
  * asterisk goes unanswered, and cannot be disabled for a reason no field is
- * showing. Where it *leads* is the next slice: building the message and opening
- * WhatsApp belongs to dispatch.
+ * showing.
+ *
+ * What pressing it does is the one piece of dispatch that has to happen here:
+ * freeze the order, stash it for the confirmation page, and open WhatsApp from
+ * the click itself. The message and the link are `lib/order`'s.
  */
 export function CheckoutView({
   products,
   deliveryFeeUsdCents,
   rails,
+  whatsappNumber,
 }: {
   products: Product[];
   /** Flat and the shop's to set, so it arrives from config rather than a literal. */
   deliveryFeeUsdCents: number;
   /** The rails the shop has switched on, already resolved from config. */
   rails: PaymentRail[];
+  /** The shop's own chat, so the deep-link's destination lives in config. */
+  whatsappNumber: string;
 }) {
   const router = useRouter();
   const { lines, loaded } = useCart();
@@ -128,12 +139,48 @@ export function CheckoutView({
   // the same answer every asterisk on the page was drawn from.
   const submittable = Object.keys(errors).length === 0;
 
+  /**
+   * Dispatch: the order is frozen at today's prices, handed to the confirmation
+   * page, and WhatsApp is opened with the message already written.
+   *
+   * **A new tab, from the click itself.** Opening it here rather than on arrival
+   * keeps it the customer's own action — a browser blocks a popup, not a
+   * navigation someone just asked for — and navigating *this* tab to WhatsApp
+   * instead would mean the confirmation page never rendered. If the browser
+   * refuses anyway, nothing is lost: the same link is the first thing on the page
+   * they land on.
+   */
+  function dispatch() {
+    const order = buildOrder(
+      lines,
+      products,
+      form,
+      { deliveryFeeUsdCents },
+      orderCode(),
+    );
+
+    stashOrder(window.sessionStorage, order);
+    window.open(orderToWhatsAppUrl(order, { whatsappNumber }), "_blank");
+    // `push`, not `replace`, so the confirmation page stays in history: a customer
+    // who wanders back into the catalog and presses Back finds the link again,
+    // which is the whole point of its being re-openable.
+    router.push(routes.orderSent);
+  }
+
   return (
     <div className="mt-9 grid items-start gap-11 lg:grid-cols-[1fr_340px] lg:gap-16">
       {/* Ours is the only validation, so the browser's is turned off: its
           bubbles would contradict the hints beside the fields, in a language
           this app never chose. */}
-      <form noValidate onSubmit={(event) => event.preventDefault()}>
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          // The button is disabled and cannot fire this, but Enter in a text
+          // field reaches a form directly in some browsers.
+          if (submittable) dispatch();
+        }}
+      >
         <div className="grid gap-9">
           <BuyerSection {...section} />
           <DeliverySection {...section} fee={deliveryFeeUsdCents} />
@@ -435,7 +482,7 @@ function ExtrasSection({ form, update }: SectionProps) {
       <TextAreaField
         label={copy.extras.cardMessage}
         hint={copy.extras.cardMessageHint}
-        note={copy.extras.cardMessageCount(
+        note={copy.extras.charCount(
           form.cardMessage.length,
           MAX_CARD_MESSAGE_LENGTH,
         )}
@@ -449,9 +496,14 @@ function ExtrasSection({ form, update }: SectionProps) {
         value={form.cardFrom}
         onValueChange={(cardFrom) => update({ cardFrom })}
       />
+      {/* Capped like the card, and counted for the same reason: the whole order
+          has to fit inside one deep-link, and a box that stops accepting
+          characters without saying why is worse than a limit stated up front. */}
       <TextAreaField
         label={copy.extras.notes}
         hint={copy.extras.notesHint}
+        note={copy.extras.charCount(form.notes.length, MAX_NOTES_LENGTH)}
+        maxLength={MAX_NOTES_LENGTH}
         value={form.notes}
         onValueChange={(notes) => update({ notes })}
       />
@@ -640,8 +692,6 @@ function AccountBlock({ rail }: { rail: PaymentRail }) {
 function Submit({ ready }: { ready: boolean }) {
   return (
     <div className="border-hairline border-t pt-8">
-      {/* Dispatch — the message, the order code and the deep-link — is the next
-          slice. The gate is here because it is what the payment state decides. */}
       <button
         type="submit"
         disabled={!ready}

@@ -16,12 +16,13 @@ export const metadata: Metadata = {
  * Checkout. No breadcrumbs, like the cart: it is a step in the order rather than
  * a place in the catalog.
  *
- * The three things the island cannot work out for itself are read here, at build
+ * The four things the island cannot work out for itself are read here, at build
  * time, and handed down: the catalog every line resolves its name and price
- * against, the shop's flat delivery fee, and the payment rails it has switched
- * on. None is fetched by the island — the fee and the rails in particular arrive
- * as props so the shop's own numbers live in config and nowhere else, and a
- * switched-off rail is absent from the page rather than hidden by it.
+ * against, the shop's flat delivery fee, the payment rails it has switched on,
+ * and the chat the finished order is sent to. None is fetched by the island — the
+ * fee, the rails and the number arrive as props so the shop's own details live in
+ * config and nowhere else, and a switched-off rail is absent from the page rather
+ * than hidden by it.
  */
 export default async function CheckoutPage() {
   const products = await catalog.listProducts();
@@ -39,6 +40,7 @@ export default async function CheckoutPage() {
         products={products}
         deliveryFeeUsdCents={shopConfig.deliveryFeeUsdCents}
         rails={availableRails(shopConfig.paymentRails)}
+        whatsappNumber={shopConfig.whatsappNumber}
       />
     </Container>
   );

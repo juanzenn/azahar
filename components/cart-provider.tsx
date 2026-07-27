@@ -98,6 +98,25 @@ function update(change: (cart: Cart) => Cart): void {
   publish(lines);
 }
 
+/**
+ * The write API, at module scope rather than rebuilt per render.
+ *
+ * None of these closes over a render — they read the store's own snapshot — so
+ * their identities are stable, which is what lets the confirmation page empty the
+ * cart from an effect that runs exactly once instead of on every publish.
+ */
+const add = (slug: string) => update((cart) => addLine(cart, slug));
+const setQty = (slug: string, qty: number) =>
+  update((cart) => setLineQty(cart, slug, qty));
+const remove = (slug: string) => update((cart) => removeLine(cart, slug));
+
+/**
+ * Emptied wholesale, which happens in exactly one place: arriving at the
+ * confirmation page. The order has been written into a message by then, and a
+ * cart that survived it would let a reload send the flowers twice.
+ */
+const clear = () => update(() => []);
+
 type CartContextValue = {
   /** The stored lines: `{ slug, qty }` and nothing else. */
   lines: Cart;
@@ -107,6 +126,7 @@ type CartContextValue = {
   add: (slug: string) => void;
   setQty: (slug: string, qty: number) => void;
   remove: (slug: string) => void;
+  clear: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -147,9 +167,10 @@ export function CartProvider({
       lines,
       count: cartCount(lines),
       loaded,
-      add: (slug) => update((cart) => addLine(cart, slug)),
-      setQty: (slug, qty) => update((cart) => setLineQty(cart, slug, qty)),
-      remove: (slug) => update((cart) => removeLine(cart, slug)),
+      add,
+      setQty,
+      remove,
+      clear,
     }),
     [lines, loaded],
   );

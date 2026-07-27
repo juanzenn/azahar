@@ -6,7 +6,7 @@
 ![React](https://img.shields.io/badge/React-19-087ea4?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-229%20passing-1f4d3a)
+![Tests](https://img.shields.io/badge/tests-278%20passing-1f4d3a)
 
 Azahar is a storefront for a small florist: ~50 products across 10 categories, an Amazon-style faceted
 search, a cart, and a checkout that collects the order, shows the shop's payment details, and hands
@@ -85,6 +85,24 @@ about.
   _and_ from the footer's trust signals. Cash behaves differently everywhere — it asks whether change
   is needed instead of asking for a reference.
 
+**Dispatch**
+
+- One press builds the order, opens WhatsApp with the whole thing already written — line items, totals,
+  delivery, recipient, payment and reference — and lands the customer on a confirmation page. All they
+  do is press send; nothing sends itself, and the copy never pretends otherwise.
+- **The message _is_ the order.** Nothing persists server-side, so the confirmation page is rendered
+  from the very sections the message is written from — one description, two renderings, and no way for
+  the page to describe an order differently from the shop's copy of it.
+- Sections appear only when they say something (recipient only for a gift, address only for a delivery,
+  card and notes only if filled), the message is encoded exactly once with `%0A` newlines, and it keeps
+  itself under the deep-link's ~2000 characters — a real order is never trimmed, and an absurd cart
+  folds its tail into a summary line rather than letting WhatsApp truncate the end, where the payment
+  reference lives.
+- An `AZ-XXXX` code to say out loud in the chat, drawn from an **injectable** randomness source.
+- The cart is emptied on arrival so a reload can't order twice, the deep-link stays re-openable in case
+  the first attempt failed, and the shop's raw number sits beside it with a copy button so a missing
+  WhatsApp never strands an order.
+
 **Everything else**
 
 - Spanish throughout, from URLs (`/categoria/ramos`, `/finalizar-compra`) to copy, with every
@@ -92,7 +110,8 @@ about.
 - Real `<label>`s and native pickers on mobile, errors gated on each field's own blur.
 - A single committed light palette ("Jardín"), so an OS dark-mode preference can't hijack the design.
 
-Dispatch to WhatsApp and the confirmation page are the next ticket — see the [roadmap](#roadmap).
+The shopping path is end to end: browse, filter, add to cart, check out, pay out-of-band, send the
+order. What is left is real photography — see the [roadmap](#roadmap).
 
 ## Architecture
 
@@ -113,7 +132,7 @@ small interface, which is why the test suite can be substantial without being br
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lib/search.ts`  | Filter, sort, paginate, count facets — plus the URL parse/serialise, because the key→field map is already its job                              |
 | `lib/cart.ts`    | Add/remove/set quantity, resolve lines against the catalog, prune what no longer exists                                                        |
-| `lib/order.ts`   | Which fields are required, what's invalid, what the order comes to                                                                             |
+| `lib/order.ts`   | Which fields are required, what's invalid, what the order comes to — and the message that carries it                                           |
 | `lib/payment.ts` | Turn the shop's configured rails into the rows each account block renders                                                                      |
 | `lib/facets.ts`  | The view model between search and the controls: each control carries the criteria it produces when clicked, so no component branches per facet |
 | `lib/env.ts`     | Read the shop's own details out of the build environment, distinguishing absent from blank from malformed                                      |
@@ -134,7 +153,7 @@ demo shop. See [Configuration](#configuration).
 | Framework            | Next.js 16, App Router, `output: "export"`                                                       |
 | UI                   | React 19, Tailwind CSS 4, shadcn/ui primitives vendored into the repo (not a runtime dependency) |
 | Language             | TypeScript, `strict`, no `any`, path alias `@/*`                                                 |
-| Tests                | Vitest 4 + React Testing Library, jsdom — 229 tests                                              |
+| Tests                | Vitest 4 + React Testing Library, jsdom — 278 tests                                              |
 | Tooling              | ESLint (flat config), Prettier + `prettier-plugin-tailwindcss`, Node 26, npm                     |
 | Runtime dependencies | None for logic. Search, cart, order and payment are dependency-free                              |
 
@@ -183,15 +202,18 @@ bank details on the page. Nothing secret belongs here.
 
 ## Testing
 
-229 tests, and what they _don't_ cover is as deliberate as what they do.
+278 tests, and what they _don't_ cover is as deliberate as what they do.
 
 - **The pure modules get the depth.** Search, cart and order swallow the real behaviour, and none of
-  them needs a DOM.
+  them needs a DOM. The locked WhatsApp template is asserted whole, once, and every rule that shapes it
+  — a section that comes and goes, the cash variant, `%0A` newlines, encoded exactly once, the ~2000
+  character ceiling under a cart of the entire catalog — is then taken one at a time.
 - **The islands get thin wiring tests** that must not re-test that logic — a filter change uses
   `replace` and resets to page 1, a page change uses `push`, the conditional checkout blocks appear
-  with their toggles, an empty cart redirects. The checkout test names no amounts and no rail's real
-  fields, because what the figures come to is `lib/order`'s job and which rows a rail has is
-  `lib/payment`'s, both proven without a DOM.
+  with their toggles, an empty cart redirects, pressing send stashes the order and opens the link, a
+  confirmation page with no stashed order sends the customer home with their cart untouched. These
+  tests name no amounts, no rail's real fields and no message text, because what the figures come to is
+  `lib/order`'s job and which rows a rail has is `lib/payment`'s, both proven without a DOM.
 - **The 50-item seed gets invariant tests** rather than being used as a fixture: category spread,
   price-bucket coverage, 7 featured with the flagship first, and **every facet value having at least 3
   products**, so no filter can dead-end.
@@ -252,11 +274,9 @@ re-litigating anything. The judgment calls were still mine; the spec is where th
 
 **Finishing the build**
 
-- [ ] **Dispatch and confirmation** (ticket 13) — build the WhatsApp deep-link from the order, stash it
-      in `sessionStorage`, and land on `/pedido-enviado` with the order code, a re-openable WhatsApp
-      button, a raw-number copy fallback and the _comprobante_ reminder, clearing the cart on arrival.
 - [ ] **Real photography** (ticket 14) — replace the placeholder imagery with a curated, correctly
-      sized set. Because the export is unoptimized, the committed assets _are_ the delivered assets.
+      sized set. Because the export is unoptimized, the committed assets _are_ the delivered assets. The
+      last ticket, and the only one that needs taste rather than code.
 
 **Making it presentable**
 

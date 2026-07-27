@@ -2,7 +2,12 @@ import type { Colour, FlowerType, Occasion, Size } from "@/lib/catalog/types";
 import { formatPrice } from "@/lib/format";
 // Type-only, so nothing imports back at runtime: checkout's vocabularies are the
 // order module's, and their labels are this one's.
-import type { CheckoutIssue, PaymentMethod, TimeWindow } from "@/lib/order";
+import type {
+  CheckoutIssue,
+  DeliveryMethod,
+  PaymentMethod,
+  TimeWindow,
+} from "@/lib/order";
 // Type-only, so nothing imports back at runtime: the search module reads
 // `facetLabels` from here, and price range is its vocabulary rather than the
 // domain model's because it is derived from the price.
@@ -358,8 +363,8 @@ export const strings = {
       cardMessage: "Mensaje de la tarjeta",
       cardMessageHint:
         "Lo escribimos a mano en la tarjeta que acompaña las flores.",
-      cardMessageCount: (used: number, max: number) =>
-        `${used}/${max} caracteres`,
+      /** Shared by both capped boxes: the card's words and the notes. */
+      charCount: (used: number, max: number) => `${used}/${max} caracteres`,
       cardFrom: "De parte de",
       cardFromHint: "Déjalo vacío si quieres que el regalo sea anónimo.",
       notes: "Notas adicionales",
@@ -453,6 +458,132 @@ export const strings = {
       required: "Completa este campo.",
       "past-date": "Elige una fecha de hoy en adelante.",
     } satisfies Record<CheckoutIssue, string>,
+
+    /**
+     * The order as a record: the headings and labels of the sections that both
+     * the WhatsApp message and the confirmation page are built from.
+     *
+     * Deliberately shorter than the form's own labels — "Teléfono" where the
+     * field says "Teléfono / WhatsApp" — because a chat message is read at a
+     * glance and every character counts against the deep-link's ceiling. And
+     * deliberately *shared*: the page shows what the shop received because it is
+     * rendered from the same sections, so the two cannot describe one order
+     * differently. No WhatsApp markup here for the same reason.
+     */
+    record: {
+      products: "Productos",
+      /** `• 2x Ramo Primavera — $25 c/u` */
+      item: (qty: number, name: string, price: string) =>
+        `• ${qty}x ${name} — ${price}`,
+      /** Marks the price as per-unit, which only matters when a line repeats. */
+      each: (price: string) => `${price} c/u`,
+      /**
+       * `• y 3 productos más — $137`. The tail of a cart too long to itemise
+       * inside a chat message, summarised so the money still adds up.
+       */
+      more: (count: number, total: string) =>
+        `• y ${count} ${count === 1 ? "producto" : "productos"} más — ${total}`,
+      subtotal: "Subtotal",
+      delivery: "Envío",
+      total: "Total",
+
+      deliveryHeading: "Entrega",
+      method: "Tipo",
+      methods: {
+        envio: "Envío a domicilio",
+        retiro: "Retiro en tienda",
+      } satisfies Record<DeliveryMethod, string>,
+      date: "Fecha",
+      /** `2026-07-25 (Tarde)` — the franja beside the day it belongs to. */
+      dateWithWindow: (date: string, window: string) => `${date} (${window})`,
+      /**
+       * Short franja labels. The form's own run to "Mañana (8:00 am – 12:00 pm)",
+       * which inside these brackets would nest a second pair. `otra` is absent
+       * because the customer's own words are what stands in for it.
+       */
+      windows: {
+        manana: "Mañana",
+        tarde: "Tarde",
+      } satisfies Record<Exclude<TimeWindow, "otra">, string>,
+      address: "Dirección",
+      landmark: "Punto de referencia",
+      zone: "Zona",
+
+      recipientHeading: "Destinatario (regalo)",
+      name: "Nombre",
+      phone: "Teléfono",
+      /** Its own section when the flowers are not a gift but a card was written. */
+      cardHeading: "Tarjeta",
+      card: "Tarjeta",
+      /** Quoted, so the florist copies the words and not the label. */
+      cardText: (message: string) => `"${message}"`,
+      cardFrom: "De parte de",
+
+      buyerHeading: "Comprador",
+      email: "Email",
+
+      paymentHeading: "Pago",
+      paymentMethod: "Método",
+      /** Efectivo's own label: the shop reads *when* it is paid, not just how. */
+      cash: "Efectivo (pago contra entrega)",
+      reference: "Referencia",
+      change: "Vuelto",
+      /**
+       * `Vuelto: Pago con $50` — the note the courier brings change for. Takes
+       * the bare number the field asks for and owns the currency mark, like every
+       * other amount the customer reads.
+       */
+      changeWith: (amount: string) => `Pago con $${amount}`,
+
+      notesHeading: "Notas",
+    },
+
+    /**
+     * The two lines that belong to the chat and nowhere else, so these are the
+     * only strings in the file carrying WhatsApp's own `*emphasis*`.
+     */
+    message: {
+      greeting: (code: string) =>
+        `Hola Azahar 🌸 Quiero confirmar mi pedido *${code}*`,
+      /** Written as the customer, to the shop, in the chat it is going to. */
+      receipt: "(Te envío el comprobante en este chat 📎)",
+    },
+  },
+
+  /**
+   * The confirmation page.
+   *
+   * Its whole job is to be honest about where the order is: built, written and
+   * waiting in WhatsApp, but not sent until the customer presses send there. So
+   * nothing here says "recibimos tu pedido" — the shop has not received anything
+   * yet, and a page that implies otherwise is how an order goes missing.
+   */
+  orderSent: {
+    title: "Tu pedido está listo",
+    description:
+      "Abre WhatsApp y envía el mensaje con tu pedido ya escrito para confirmarlo.",
+    eyebrow: "Último paso",
+    heading: "Tu pedido está listo para enviar",
+    intro:
+      "Ya lo escribimos por ti. Abre WhatsApp y pulsa enviar: el mensaje llega con todos tus datos, y desde ahí coordinamos contigo.",
+
+    codeLabel: "Código del pedido",
+    codeNote: "Menciónalo si necesitas escribirnos por otra vía.",
+
+    whatsappCta: "Abrir WhatsApp para enviar tu pedido 🌸",
+    /** Says plainly that the last press is theirs — nothing sends itself. */
+    sendNote:
+      "El mensaje se abre ya redactado. Solo tienes que pulsar enviar en WhatsApp.",
+    receiptNote:
+      "Si ya pagaste, adjunta la captura del comprobante en el chat: el enlace abre la conversación con tu pedido escrito, pero la imagen la envías tú.",
+
+    fallbackHeading: "¿No se abrió WhatsApp?",
+    fallbackBody:
+      "Copia nuestro número y escríbenos desde donde prefieras. Guarda tu código de pedido para que sepamos cuál es.",
+    numberLabel: "Número de la tienda",
+
+    recordHeading: "Lo que enviamos",
+    keepShopping: "Seguir comprando",
   },
 
   about: {

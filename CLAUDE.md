@@ -128,9 +128,15 @@ degrade to a working cart. Surfaces wait on `loaded` before painting, so nobody 
 `CheckoutForm`, and the questions worth asking about it live here:
 
 ```ts
-requiredFields(form)                     → ReadonlySet<CheckoutField>
-validate(form, today)                    → CheckoutErrors
-quoteOrder(cart, products, form, config) → OrderQuote
+requiredFields(form)                           → ReadonlySet<CheckoutField>
+validate(form, today)                          → CheckoutErrors
+quoteOrder(cart, products, form, config)       → OrderQuote
+orderCode(random?)                             → "AZ-7K3Q"
+buildOrder(cart, products, form, config, code) → Order
+orderSections(order)                           → OrderSection[]
+orderMessage(order)                            → string
+orderToWhatsAppUrl(order, config)              → string
+stashOrder(storage, order) / readStashedOrder(storage)
 ```
 
 The **conditional-required web** is a function of the form rather than a validation pass: three
@@ -161,7 +167,41 @@ entrega, so `requiredFields` asks it for no `reference` and asks instead — whe
 they need change — what note they are paying with. The submit gate is nothing but
 `validate(form, today)` being empty, so the button can't disagree with the asterisks.
 
-`buildOrder` and `orderToWhatsAppUrl` join this module with dispatch.
+### Dispatch — the message _is_ the order
+
+Nothing about an order persists server-side, so what the shop receives is the whole product.
+`buildOrder` freezes a validated form, the cart and today's catalog into a self-contained `Order`
+(`OrderItem` carries the name and price **as they were**, so a reloaded confirmation can't disagree
+with the message the customer can still re-send). The code arrives as an argument, from
+`orderCode(random?)` — the one unrepeatable act, isolated so it can be handed a script in a test.
+
+**`orderSections(order)` is the shared shape behind the message and the confirmation page.** Blocks of
+labelled rows, and the "sections appear only when relevant" rule enforced once at that door — a block
+with no rows is dropped, a row whose field was blank removed itself. The page renders those sections as
+JSX and `orderMessage` renders them as WhatsApp text, so there is no second set of conditionals to
+drift. The locked template lives in `.scratch/spec.md` §9 and is asserted whole in one test. One
+deliberate departure from it: the template shows the card only inside the recipient block, so a card
+written on an order that is **not** a gift gets a `*Tarjeta*` block of its own — a hand-written card
+dropped from the message is a card the florist never writes.
+
+`orderToWhatsAppUrl` builds a single `wa.me` link: digits-only number (`+`, zeros and separators
+stripped, because a shop owner types this into an env var by hand), and the message through
+`encodeURIComponent` **once** — `%0A` newlines, emoji as UTF-8 bytes, no `%2520`. The message keeps
+itself under the ~2000-char ceiling: a real order is never trimmed, and past the budget item lines fold
+into one `• y N productos más — $X` summary rather than letting WhatsApp truncate the _end_, which is
+where the payment reference lives. The **cart** is what can grow without bound, so the cart is what
+folds; the fields are the form's to bound, which is what `MAX_CARD_MESSAGE_LENGTH` and
+`MAX_NOTES_LENGTH` are for.
+
+Submit opens the link in a **new tab from the click itself** (a popup blocker refuses a popup, not a
+navigation someone just asked for) and `push`es to `/pedido-enviado`, with the order handed over in
+`sessionStorage` — the tab-lifetime store, read through `useSyncExternalStore` like the cart, and
+untrusted input like anything else in a browser store (`readStashedOrder` returns `null` for every way
+it can be wrong, and the page sends those customers home). The confirmation page **clears the cart on
+arrival, once per order code**, so a reload can't order twice and a customer who kept shopping and
+pressed Back doesn't lose the new cart. The deep-link stays re-openable, the raw number sits beside it
+with a `CopyButton`, and no copy anywhere claims the shop received anything: the customer still has to
+press send.
 
 ### Domain model
 
@@ -221,17 +261,21 @@ with flagship first, every facet value ≥3 products, unique ASCII slugs).
 Logic tests concentrate on three pure seams — **search**, **cart**, **order** — each of which
 swallows a lot of behaviour behind one door and needs no DOM.
 
-Islands get **deliberately thin wiring tests** that must not re-test that logic. Two exist:
+Islands get **deliberately thin wiring tests** that must not re-test that logic. Three exist:
 
 - **results island** — a filter change uses `replace`, a page change uses `push`, a filter change
   resets to page 1, mounting from a URL with params reproduces that state.
 - **checkout island** — the conditional blocks appear and disappear with the toggles, the recipient
   phone's marking moves with the method, the summary is fed by the catalog and moves with the method,
   choosing a rail reveals that rail's account block and hides the last, the submit button opens only
-  once the order is complete and paid, an empty cart redirects. It names **no amounts** and no rail's
-  real fields: what the figures come to is `lib/order`'s and which rows a rail has is `lib/payment`'s,
-  both proven without a DOM, and restating either here would be the exact duplication this split
-  exists to avoid.
+  once the order is complete and paid, pressing it opens the deep-link and stashes the order and
+  routes, an incomplete order dispatches nothing, an empty cart redirects. It names **no amounts** and
+  no rail's real fields: what the figures come to is `lib/order`'s and which rows a rail has is
+  `lib/payment`'s, both proven without a DOM, and restating either here would be the exact duplication
+  this split exists to avoid.
+- **confirmation island** — the stashed order becomes a code and a re-openable link, the raw number is
+  there to copy, the cart is emptied on arrival, and no stash sends the customer home with their cart
+  untouched. It names **no section, row or message text**: what the record says is `orderSections`'.
 
 Explicitly **not** tested: the catalog seam's static implementation (it returns array literals; the
 compiler is the guarantee), visual appearance, and Server Component page rendering (the build
@@ -250,15 +294,12 @@ exercises it).
 **One ticket, one commit**, message `feat(NN): <summary>`. Progress is tracked by commit history and
 by the ticket checkboxes.
 
-Tickets 01–12 are complete: scaffold, catalog seam, imagery, about/404, home, product detail, search
-module, results island + `/buscar`, categories index + category pages, cart, checkout details, and
-the payment rails + submit gate.
+Tickets 01–13 are complete: scaffold, catalog seam, imagery, about/404, home, product detail, search
+module, results island + `/buscar`, categories index + category pages, cart, checkout details, the
+payment rails + submit gate, and dispatch + confirmation. **The shopping path is end to end**: browse,
+filter, add to cart, check out, pay out-of-band, send the order by WhatsApp.
 
-Next is **13 — dispatch and confirmation**: `buildOrder` and `orderToWhatsAppUrl` in `lib/order`
-(the locked message template, sections present only when relevant, `*bold*` markers, encoded exactly
-once, `%0A` newlines, under ~2000 chars), an `AZ-XXXX` order code from an **injectable** randomness
-source, the order stashed in `sessionStorage`, and `/pedido-enviado` carrying the summary, the code,
-the WhatsApp button, the raw-number copy fallback and the comprobante reminder — clearing the cart on
-arrival. One thing is already shaped for it: the checkout form's submit button is gated and waiting
-for a handler, and `components/copy-button.tsx` is the fallback's copy control. Then **14** (real
-photography).
+Next is **14 — curate real photography**, which is `ready-for-human` and blocks nothing: 29 real
+photographs saved over the placeholders at their existing filenames. **No code changes** — if replacing
+an image needs a component touched, an image reference is being stitched together somewhere it
+shouldn't be.
