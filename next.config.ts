@@ -2,8 +2,10 @@ import { readFileSync } from "node:fs";
 
 import type { NextConfig } from "next";
 
+import { auditBuildConfig } from "./lib/config-audit";
+
 /**
- * Report the shop-configuration variables this build did not find.
+ * Check this build's shop configuration, and refuse it in strict mode.
  *
  * It runs here because the config is the one module Next evaluates per *build*:
  * `lib/config` is imported by the footer on every page and evaluated per route,
@@ -11,14 +13,17 @@ import type { NextConfig } from "next";
  *
  * `.env.example` is the manifest — every variable documented there is checked,
  * and `lib/config.test.ts` holds the file and the module to the same list so the
- * two cannot drift. The build only ever warns: a clone with no environment
- * builds into the placeholder demo shop, which is what the placeholders are for.
- * A deploy that wants a hard gate can assert on `absentShopConfig()`.
+ * two cannot drift. What to do about a gap is `lib/config-audit`'s decision, and
+ * the interesting half of it is that a plain `npm run build` still *warns*: a
+ * clone with no environment builds into the placeholder demo shop, which is what
+ * the placeholders are for. A deploy sets `AZAHAR_STRICT_CONFIG` and gets a
+ * build that stops instead.
  */
-function reportPlaceholderConfig(): void {
+function checkShopConfig(): void {
   // Next reads the config twice per build, and again on every dev restart. The
-  // sentinel keeps the report to one; child processes inherit it.
-  if (process.env.AZAHAR_CONFIG_REPORTED) return;
+  // sentinel keeps the report to one; child processes inherit it. A refusal is
+  // exempt — a build must not become shippable by being run twice.
+  const alreadyReported = process.env.AZAHAR_CONFIG_REPORTED === "1";
   process.env.AZAHAR_CONFIG_REPORTED = "1";
 
   let manifest: string;
@@ -28,24 +33,18 @@ function reportPlaceholderConfig(): void {
     return; // No manifest to check against — nothing useful to say.
   }
 
-  const documented = [...manifest.matchAll(/^(NEXT_PUBLIC_\w+)=/gm)].map(
-    (match) => match[1],
-  );
-  // A lookup through a variable is fine here, unlike in `lib/config`: this file
-  // is never bundled for a browser, so there is no inlining to defeat.
-  const absent = documented.filter((name) => process.env[name] === undefined);
+  const audit = auditBuildConfig(manifest, process.env);
 
-  if (absent.length === 0) return;
+  if (audit.kind === "refused") {
+    throw new Error(`[azahar] ${audit.message}`);
+  }
 
-  console.warn(
-    `\n[azahar] ${absent.length} of ${documented.length} shop-configuration ` +
-      `variables are unset — this build uses placeholder values for them:\n` +
-      absent.map((name) => `  · ${name}`).join("\n") +
-      `\nFine for a demo. A real shop sets all of them — see .env.example.\n`,
-  );
+  if (audit.kind === "placeholders" && !alreadyReported) {
+    console.warn(`\n[azahar] ${audit.message}\n`);
+  }
 }
 
-reportPlaceholderConfig();
+checkShopConfig();
 
 const nextConfig: NextConfig = {
   // Fully static export: every page prerenders from the seed catalog at build

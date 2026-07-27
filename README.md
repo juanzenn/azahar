@@ -293,8 +293,10 @@ re-litigating anything. The judgment calls were still mine; the spec is where th
       deliberately doesn't cover that path, and it's the one that costs the shop an order.
 - [ ] Accessibility audit with axe — focus management in the mobile filter sheet, keyboard traps, and
       a full pass on the checkout form's error announcements.
-- [ ] Optional strict configuration mode, so a production deploy fails rather than shipping placeholder
-      payment details.
+- [x] Optional strict configuration mode, so a production deploy fails rather than shipping placeholder
+      payment details. `AZAHAR_STRICT_CONFIG=1` turns the build's missing-configuration warning into a
+      refusal that lists every unset variable at once. Off by default, because the placeholders are what
+      make a fresh clone runnable.
 
 **Where it could go**
 

@@ -235,6 +235,13 @@ rather than a filter that silently matches nothing.
   deliberate blank (a Pay ID with no wallet), and **malformed** — `ENABLED=maybe`, `FEE_CENTS=5.50` —
   fails the build, because there is no safe guess at a payment detail. Adding a config field means
   adding the read, the placeholder and the `.env.example` line together.
+- **A deploy sets `AZAHAR_STRICT_CONFIG`, and then absent stops being forgivable.** `lib/config-audit.ts`
+  is the pure decision behind that — `configured` / `placeholders` / `refused` — and `next.config.ts`
+  warns on the second and throws on the third. The default has to stay permissive: the placeholders are
+  what make a clone runnable. But they include a Pago Móvil number and a Zelle account that are not the
+  shop's, and a static export prints them into every page, so the deploy that forgets one variable is
+  the failure worth engineering against. It is the only module in `lib/` that imports by relative path
+  — Next's config loader doesn't resolve `@/*`.
 - **Theme tokens over hex.** `app/globals.css` defines the "Jardín" palette as CSS variables and maps
   them onto shadcn's semantic tokens, exposed as utilities: `bg-ground`, `text-ink`, `text-ink-muted`,
   `border-hairline`, `text-plum`, `text-gold`. Prefer `text-primary` for the brand emerald. The site
